@@ -145,9 +145,9 @@ public class DefaultSerializerTests {
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
 
-        TestEnum test3 = TestEnum.V3;
+        TestEnum test3 = TestEnum.V_3;
         runaboutInput = DefaultSerializer.getInstance().toRunaboutGeneric(test3);
-        Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.V3", runaboutInput.getEval());
+        Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.V_3", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
     }
@@ -155,6 +155,6 @@ public class DefaultSerializerTests {
     private enum TestEnum {
         VALUE1,
         test2,
-        V3
+        V_3
     }
 }

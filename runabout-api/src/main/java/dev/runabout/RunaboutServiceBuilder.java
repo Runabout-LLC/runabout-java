@@ -1,30 +1,29 @@
 package dev.runabout;
 
-import dev.runabout.json.JsonFactory;
-import dev.runabout.json.JsonObject;
-
+import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class RunaboutServiceBuilder<T extends JsonObject> {
 
-    private CallerSupplier callerSupplier;
+    private Supplier<Method> callerSupplier;
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
     private boolean shouldThrow;
     private boolean excludeSuper;
 
-    private final JsonFactory<T> jsonFactory;
+    private final Supplier<T> jsonFactory;
 
     public static RunaboutServiceBuilder<JsonObject> getDefaultBuilder() {
         return  new RunaboutServiceBuilder<>(new JsonObjectImpl.JsonFactoryImpl());
     }
 
-    public RunaboutServiceBuilder(JsonFactory<T> jsonFactory) {
+    public RunaboutServiceBuilder(Supplier<T> jsonFactory) {
         this.jsonFactory = jsonFactory;
     }
 
-    public RunaboutServiceBuilder<T> setCallerSupplier(CallerSupplier callerSupplier) {
+    public RunaboutServiceBuilder<T> setCallerSupplier(Supplier<Method> callerSupplier) {
         this.callerSupplier = callerSupplier;
         return this;
     }
@@ -56,7 +55,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         }
 
         final Set<Class<?>> callerClassBlacklistFinal = Optional.ofNullable(callerClassBlacklist).orElseGet(Set::of);
-        final CallerSupplier callerSupplierFinal = Optional.ofNullable(callerSupplier)
+        final Supplier<Method> callerSupplierFinal = Optional.ofNullable(callerSupplier)
                 .orElseGet(() -> new DefaultCallerSupplier(callerClassBlacklistFinal));
 
         final RunaboutSerializer customSerializerFinal = Optional.ofNullable(this.customSerializer)

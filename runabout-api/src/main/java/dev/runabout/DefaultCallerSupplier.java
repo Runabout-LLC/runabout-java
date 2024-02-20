@@ -6,8 +6,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-class DefaultCallerSupplier implements CallerSupplier {
+class DefaultCallerSupplier implements Supplier<Method> {
 
     private static final Set<StackWalker.Option> options = Set.of(
             StackWalker.Option.RETAIN_CLASS_REFERENCE,
@@ -21,13 +22,14 @@ class DefaultCallerSupplier implements CallerSupplier {
     }
 
     @Override
-    public Method getCaller() {
+    public Method get() {
 
         final AtomicBoolean failed = new AtomicBoolean(false);
         final AtomicReference<Method> method = new AtomicReference<>();
 
         StackWalker.getInstance(options).forEach(stackFrame -> {
             if (method.get() == null && !failed.get() && stackFrame.isNativeMethod() &&
+                    stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
                     !callerClassBlackList.contains(stackFrame.getDeclaringClass())) {
                 try {
                     method.set(getMethodFromStackFrame(stackFrame));

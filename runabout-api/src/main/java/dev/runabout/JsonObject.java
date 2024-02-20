@@ -1,4 +1,4 @@
-package dev.runabout.json;
+package dev.runabout;
 
 import java.util.List;
 

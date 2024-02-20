@@ -66,7 +66,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="JUnit.DefaultSerializerTests.testEnumSerializer">
+  <component name="RunManager" selected="JUnit.dev.runabout in runabout-java.runabout-api.test">
     <configuration name="DefaultSerializerTests" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
       <module name="runabout-java.runabout-api.test" />
       <extension name="coverage">
@@ -99,8 +99,23 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="dev.runabout in runabout-java.runabout-api.test" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="runabout-java.runabout-api.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="dev.runabout.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="dev.runabout" />
+      <option name="TEST_OBJECT" value="package" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.dev.runabout in runabout-java.runabout-api.test" />
         <item itemvalue="JUnit.DefaultSerializerTests.testEnumSerializer" />
       </list>
     </recent_temporary>
@@ -132,5 +147,10 @@
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
     <select />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/runabout_java$dev_runabout_in_runabout_java_runabout_api_test.ic" NAME="dev.runabout in runabout-java.runabout-api.test Coverage Results" MODIFIED="1708410759239" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+      <FILTER>dev.runabout.*</FILTER>
+    </SUITE>
   </component>
 </project>

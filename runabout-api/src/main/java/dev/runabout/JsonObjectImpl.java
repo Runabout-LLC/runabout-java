@@ -1,13 +1,11 @@
 package dev.runabout;
 
-import dev.runabout.json.JsonFactory;
-import dev.runabout.json.JsonObject;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Supplier;
 
 class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
 
@@ -85,10 +83,10 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
         return string;
     }
 
-    static class JsonFactoryImpl implements JsonFactory<JsonObject> {
+    static class JsonFactoryImpl implements Supplier<JsonObject> {
 
         @Override
-        public JsonObjectImpl createObject() {
+        public JsonObjectImpl get() {
             return new JsonObjectImpl();
         }
     }

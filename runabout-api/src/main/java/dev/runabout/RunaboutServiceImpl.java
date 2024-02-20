@@ -1,8 +1,5 @@
 package dev.runabout;
 
-import dev.runabout.json.JsonObject;
-import dev.runabout.json.JsonFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -12,19 +9,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
     private final boolean shouldThrow;
     private final boolean excludeSuper;
-    private final CallerSupplier callerSupplier;
+    private final Supplier<Method> callerSupplier;
     private final RunaboutSerializer customSerializer;
-    private final JsonFactory<T> jsonFactory;
+    private final Supplier<T> jsonFactory;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
-    RunaboutServiceImpl(boolean shouldThrow, boolean excludeSuper, CallerSupplier callerSupplier,
-                               RunaboutSerializer customSerializer, JsonFactory<T> jsonFactory) {
+    RunaboutServiceImpl(boolean shouldThrow, boolean excludeSuper, Supplier<Method> callerSupplier,
+                               RunaboutSerializer customSerializer, Supplier<T> jsonFactory) {
         this.shouldThrow = shouldThrow;
         this.excludeSuper = excludeSuper;
         this.callerSupplier = callerSupplier;
@@ -50,8 +48,13 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
+    public Method getCallerMethod() {
+        return callerSupplier.get();
+    }
+
+    @Override
     public T toRunaboutJson(Object... objects) {
-        return toRunaboutJson(callerSupplier.getCaller(), objects);
+        return toRunaboutJson(callerSupplier.get(), objects);
     }
 
     @Override
@@ -59,7 +62,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         Objects.requireNonNull(method, "RunaboutService unable to determine caller method."); // TODO different ex type
 
-        final T json = jsonFactory.createObject();
+        final T json = jsonFactory.get();
 
         // Put version data in json.
         json.put(RunaboutConstants.VERSION_KEY, RunaboutProperties.getInstance().getJsonContractVersion());
@@ -70,7 +73,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         final List<JsonObject> inputs = new ArrayList<>();
         for (final Object object: objects) {
             final RunaboutInput input = serialize(object);
-            final T inputJson = jsonFactory.createObject();
+            final T inputJson = jsonFactory.get();
             inputJson.put(RunaboutConstants.TYPE_KEY, object.getClass().getCanonicalName());
             inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
             inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
@@ -107,12 +110,12 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
                 .orElse(null);
     }
 
-    private RunaboutInput invokeSafe(final Method m, final Object o) {
+    private RunaboutInput invokeSafe(final Method method, final Object object) {
         RunaboutInput input = null;
 
         try {
-            m.setAccessible(true);
-            input = (RunaboutInput) m.invoke(o);
+            method.setAccessible(true);
+            input = (RunaboutInput) method.invoke(object);
         } catch (IllegalAccessException ex) {
             if (this.shouldThrow) {
                 throw new RuntimeException(ex);
