@@ -21,7 +21,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     private final RunaboutSerializer customSerializer;
     private final JsonFactory<T> jsonFactory;
 
-    private final DefaultRunaboutSerializer defaultSerializer = DefaultRunaboutSerializer.getInstance();
+    private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
     RunaboutServiceImpl(boolean shouldThrow, boolean excludeSuper, CallerSupplier callerSupplier,
                                RunaboutSerializer customSerializer, JsonFactory<T> jsonFactory) {

@@ -1,6 +1,7 @@
 package dev.runabout;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,31 +10,32 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Function;
 
-class DefaultRunaboutSerializer {
+class DefaultSerializer {
 
-    private static final Map<Class<?>, RecursiveSerializer<?>> serializers = Map.ofEntries(
-            Map.entry(Map.class, (RecursiveSerializer<Map<?,?>>) DefaultRunaboutSerializer::mapSerializer),
-            Map.entry(List.class, (RecursiveSerializer<List<?>>) DefaultRunaboutSerializer::listSerializer),
-            Map.entry(Set.class, (RecursiveSerializer<Set<?>>) DefaultRunaboutSerializer::setSerializer),
-            Map.entry(String.class, (NonRecursiveSerializer<String>) DefaultRunaboutSerializer::stringSerializer),
-            Map.entry(Boolean.class, (NonRecursiveSerializer<Boolean>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Integer.class,(NonRecursiveSerializer<Integer>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Long.class,(NonRecursiveSerializer<Long>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Float.class,(NonRecursiveSerializer<Float>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Double.class,(NonRecursiveSerializer<Double>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Byte.class,(NonRecursiveSerializer<Byte>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Short.class,(NonRecursiveSerializer<Short>) DefaultRunaboutSerializer::primitiveSerializer),
-            Map.entry(Character.class, (NonRecursiveSerializer<Character>) DefaultRunaboutSerializer::charSerializer)
+    private static final Map<Class<?>, TypedSerializer<?>> serializers = Map.ofEntries(
+//            Map.entry(Map.class, (RecursiveSerializer<Map<?,?>>) DefaultSerializer::mapSerializer),
+//            Map.entry(List.class, (RecursiveSerializer<List<?>>) DefaultSerializer::listSerializer),
+//            Map.entry(Set.class, (RecursiveSerializer<Set<?>>) DefaultSerializer::setSerializer),
+            Map.entry(String.class, (TypedSerializer<String>) DefaultSerializer::stringSerializer),
+            Map.entry(Boolean.class, (TypedSerializer<Boolean>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Integer.class,(TypedSerializer<Integer>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Long.class,(TypedSerializer<Long>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Float.class,(TypedSerializer<Float>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Double.class,(TypedSerializer<Double>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Byte.class,(TypedSerializer<Byte>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Short.class,(TypedSerializer<Short>) DefaultSerializer::primitiveSerializer),
+            Map.entry(Character.class, (TypedSerializer<Character>) DefaultSerializer::charSerializer)
     );
 
-    private static final DefaultRunaboutSerializer INSTANCE = new DefaultRunaboutSerializer();
+    private static final DefaultSerializer INSTANCE = new DefaultSerializer();
 
-    public static DefaultRunaboutSerializer getInstance() {
+    public static DefaultSerializer getInstance() {
         return INSTANCE;
     }
 
-    private DefaultRunaboutSerializer() {
+    private DefaultSerializer() {
         // Singleton.
     }
 
@@ -43,14 +45,31 @@ class DefaultRunaboutSerializer {
 
         if (object instanceof Enum<?>) {
             input = enumSerializer((Enum<?>) object);
+        } else if (object instanceof Map<?,?>) {
+            input = mapSerializer((Map<?,?>) object, recursiveSerializer);
+        } else if (object instanceof Collection<?>) {
+            input = collectionSerializer((Collection<?>) object, recursiveSerializer);
         } else {
             input = Optional.ofNullable(serializers.get(object.getClass()))
-                    .map(serializer -> ((RecursiveSerializer<T>) serializer)
-                            .toRunabout(object, recursiveSerializer))
+                    .map(serializer -> (TypedSerializer<T>) serializer.apply((T) object))
                     .orElse(null);
         }
 
         return Optional.ofNullable(input).orElseGet(() -> RunaboutInput.of("", Collections.emptySet()));
+    }
+
+    private static RunaboutInput collectionSerializer(final Collection<?> collection,
+                                                      final RunaboutSerializer recursiveSerializer) {
+
+        RunaboutInput input = null;
+
+        if (collection instanceof List<?>) {
+            input = listSerializer((List<?>) collection, recursiveSerializer);
+        } else if (collection instanceof Set<?>) {
+            input = setSerializer((Set<?>) collection, recursiveSerializer);
+        }
+
+        return input;
     }
 
     private static RunaboutInput mapSerializer(final Map<?,?> map, final RunaboutSerializer recursiveSerializer) {
@@ -151,16 +170,6 @@ class DefaultRunaboutSerializer {
                 Set.of(e.getClass().getCanonicalName()));
     }
 
-    private interface RecursiveSerializer<T> {
-        RunaboutInput toRunabout(final T object, final RunaboutSerializer recursiveSerializer);
-    }
-
-    private interface NonRecursiveSerializer<T> extends RecursiveSerializer<T> {
-
-        RunaboutInput toRunabout(final T object);
-
-        default RunaboutInput toRunabout(final T object, final RunaboutSerializer recursiveSerializer) {
-            return toRunabout(object);
-        }
+    private interface TypedSerializer<T> extends Function<T, RunaboutInput> {
     }
 }
