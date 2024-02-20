@@ -15,9 +15,6 @@ import java.util.function.Function;
 class DefaultSerializer {
 
     private static final Map<Class<?>, TypedSerializer<?>> serializers = Map.ofEntries(
-//            Map.entry(Map.class, (RecursiveSerializer<Map<?,?>>) DefaultSerializer::mapSerializer),
-//            Map.entry(List.class, (RecursiveSerializer<List<?>>) DefaultSerializer::listSerializer),
-//            Map.entry(Set.class, (RecursiveSerializer<Set<?>>) DefaultSerializer::setSerializer),
             Map.entry(String.class, (TypedSerializer<String>) DefaultSerializer::stringSerializer),
             Map.entry(Boolean.class, (TypedSerializer<Boolean>) DefaultSerializer::primitiveSerializer),
             Map.entry(Integer.class,(TypedSerializer<Integer>) DefaultSerializer::primitiveSerializer),
@@ -39,23 +36,31 @@ class DefaultSerializer {
         // Singleton.
     }
 
-    public <T> RunaboutInput toRunaboutGeneric(final T object, final RunaboutSerializer recursiveSerializer) {
+    public <T> RunaboutInput toRunaboutGenericRecursive(final T object, final RunaboutSerializer recursiveSerializer) {
 
-        RunaboutInput input;
+        RunaboutInput input = null;
 
-        if (object instanceof Enum<?>) {
-            input = enumSerializer((Enum<?>) object);
-        } else if (object instanceof Map<?,?>) {
+        if (object instanceof Map<?,?>) {
             input = mapSerializer((Map<?,?>) object, recursiveSerializer);
         } else if (object instanceof Collection<?>) {
             input = collectionSerializer((Collection<?>) object, recursiveSerializer);
-        } else {
-            input = Optional.ofNullable(serializers.get(object.getClass()))
-                    .map(serializer -> (TypedSerializer<T>) serializer.apply((T) object))
-                    .orElse(null);
         }
 
-        return Optional.ofNullable(input).orElseGet(() -> RunaboutInput.of("", Collections.emptySet()));
+        return Optional.ofNullable(input).orElseGet(() -> toRunaboutGeneric(object));
+    }
+
+    public <T> RunaboutInput toRunaboutGeneric(final T object) {
+
+        RunaboutInput input = null;
+
+        if (object instanceof Enum<?>) {
+            input = enumSerializer((Enum<?>) object);
+        }
+
+        return Optional.ofNullable(input)
+                .orElseGet(() -> Optional.ofNullable(serializers.get(object.getClass()))
+                        .map(serializer -> ((TypedSerializer<T>) serializer).apply(object))
+                        .orElseGet(() -> RunaboutInput.of("", Collections.emptySet())));
     }
 
     private static RunaboutInput collectionSerializer(final Collection<?> collection,
