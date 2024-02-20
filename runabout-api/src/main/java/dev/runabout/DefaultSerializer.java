@@ -95,12 +95,12 @@ class DefaultSerializer {
                 final RunaboutInput serialValue = recursiveSerializer.toRunaboutGeneric(entry.getValue());
                 if (serialKey == null || serialKey.getEval() == null || serialKey.getEval().isEmpty() ||
                         serialValue == null || serialValue.getEval() == null || serialValue.getEval().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptyList());
+                    return RunaboutInput.of("", Collections.emptySet());
                 }
-                final String entryString = "Map.entry(" + serialKey.getKey() + ", " + serialValue.getKey() + ")";
+                final String entryString = "Map.entry(" + serialKey.getEval() + ", " + serialValue.getEval() + ")";
                 joiner.add(entryString);
-                allDependencies.addAll(serialKey.getValue());
-                allDependencies.addAll(serialValue.getValue());
+                allDependencies.addAll(serialKey.getDependencies());
+                allDependencies.addAll(serialValue.getDependencies());
             }
         }
 
@@ -121,11 +121,11 @@ class DefaultSerializer {
         for (Object item : list) {
             if (item != null) {
                 final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
-                if (serialItem == null || serialItem.getKey() == null || serialItem.getKey().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptyList());
+                if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
+                    return RunaboutInput.of("", Collections.emptySet());
                 }
-                joiner.add(serialItem.getKey());
-                allDependencies.addAll(serialItem.getValue());
+                joiner.add(serialItem.getEval());
+                allDependencies.addAll(serialItem.getDependencies());
             }
         }
 
@@ -146,11 +146,11 @@ class DefaultSerializer {
         for (Object item : set) {
             if (item != null) {
                 final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
-                if (serialItem == null || serialItem.getKey() == null || serialItem.getKey().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptyList());
+                if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
+                    return RunaboutInput.of("", Collections.emptySet());
                 }
-                joiner.add(serialItem.getKey());
-                allDependencies.addAll(serialItem.getValue());
+                joiner.add(serialItem.getEval());
+                allDependencies.addAll(serialItem.getDependencies());
             }
         }
 

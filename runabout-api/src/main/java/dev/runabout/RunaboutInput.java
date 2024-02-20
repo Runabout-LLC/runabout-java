@@ -1,42 +1,25 @@
 package dev.runabout;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.Set;
 
-public interface RunaboutInput extends Map.Entry<String, Collection<String>>{
+public interface RunaboutInput {
 
-    static RunaboutInput of(final String eval, final Collection<String> dependencies) {
+    static RunaboutInput of(final String eval, final Set<String> dependencies) {
         return new RunaboutInput() {
 
-            private Collection<String> dependenciesInternal = dependencies;
-
             @Override
-            public String getKey() {
+            public String getEval() {
                 return eval;
             }
 
             @Override
-            public Collection<String> getValue() {
-                return dependenciesInternal;
-            }
-
-            @Override
-            public Collection<String> setValue(Collection<String> value) {
-                dependenciesInternal = value;
-                return dependenciesInternal;
+            public Set<String> getDependencies() {
+                return dependencies;
             }
         };
     }
 
-    static RunaboutInput of(final Map.Entry<String, Collection<String>> entry) {
-        return RunaboutInput.of(entry.getKey(), entry.getValue());
-    }
+    String getEval();
 
-    default String getEval() {
-        return getKey();
-    }
-
-    default Collection<String> getDependencies() {
-        return getValue();
-    }
+    Set<String> getDependencies();
 }

@@ -44,7 +44,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
             input = invokeSafe(o -> defaultSerializer.toRunaboutGenericRecursive(o, this::serialize), object);
         }
 
-        return Optional.ofNullable(input).orElseGet(() -> RunaboutInput.of("", Collections.emptyList()));
+        return Optional.ofNullable(input).orElseGet(() -> RunaboutInput.of("", Collections.emptySet()));
     }
 
     @Override
@@ -104,7 +104,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         }).orElseGet(Collections::emptySet);
 
         return methods.stream()
-                .filter(method -> method.isAnnotationPresent(toRunabout.class))
+                .filter(method -> method.isAnnotationPresent(ToRunabout.class))
                 .findFirst()
                 .map(method -> invokeSafe(method, object))
                 .orElse(null);
