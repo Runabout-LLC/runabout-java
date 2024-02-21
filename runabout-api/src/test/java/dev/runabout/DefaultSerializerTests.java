@@ -3,6 +3,13 @@ package dev.runabout;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class DefaultSerializerTests {
 
     @Test
@@ -150,6 +157,44 @@ public class DefaultSerializerTests {
         Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.V_3", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
+    }
+
+    @Test
+    void testSimpleMap() {
+        final Map<String, Integer> test = new HashMap<>();
+        test.put("key1", 7);
+        test.put("key2", 9);
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+        Assertions.assertEquals("new HashMap<>(Map.ofEntries(Map.entry(\"key1\", (int) 7), Map.entry(\"key2\", (int) 9)))", runaboutInput.getEval());
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(Map.class.getCanonicalName()));
+    }
+
+    @Test
+    void testSimpleSet() {
+        final Set<String> test = Set.of("test1", "test2");
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+
+        final Set<String> potentialEvals = Set.of("new HashSet<>(Set.of(\"test1\", \"test2\"))", "new HashSet<>(Set.of(\"test2\", \"test1\"))");
+        Assertions.assertTrue(potentialEvals.contains(runaboutInput.getEval()));
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(Set.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class.getCanonicalName()));
+    }
+
+    @Test
+    void testSimpleList() {
+        final List<String> test = List.of("test1", "test2");
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+
+        Assertions.assertEquals("new ArrayList<>(List.of(\"test1\", \"test2\"))", runaboutInput.getEval());
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(List.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
     }
 
     private enum TestEnum {
