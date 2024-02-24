@@ -16,7 +16,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
     private boolean shouldThrow = false;
-    private boolean excludeSuper = true;
+    private boolean excludeSuper = false;
 
     private final Supplier<T> jsonFactory;
 
