@@ -5,6 +5,7 @@ import dev.runabout.RunaboutService;
 import dev.runabout.fixtures.ConcreteClass1;
 import dev.runabout.fixtures.ConcreteClass2;
 import dev.runabout.fixtures.Logic1;
+import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -34,5 +35,7 @@ public class RunaboutServiceImplTests {
 
         final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
         System.out.println(loggerOutput);
+        final Document document = Document.parse(loggerOutput);
+        System.out.println(document.toJson());
     }
 }
