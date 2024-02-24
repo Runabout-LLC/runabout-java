@@ -14,6 +14,7 @@ class DefaultCallerSupplier implements Supplier<Method> {
             StackWalker.Option.RETAIN_CLASS_REFERENCE,
             StackWalker.Option.SHOW_REFLECT_FRAMES
     );
+    private static final String LAMBDA_KEYWORD = "lambda$";
 
     private final Set<Class<?>> callerClassBlackList;
 
@@ -28,7 +29,7 @@ class DefaultCallerSupplier implements Supplier<Method> {
         final AtomicReference<Method> method = new AtomicReference<>();
 
         StackWalker.getInstance(options).forEach(stackFrame -> {
-            if (method.get() == null && !failed.get() && stackFrame.isNativeMethod() &&
+            if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
                     stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
                     !callerClassBlackList.contains(stackFrame.getDeclaringClass())) {
                 try {
@@ -40,6 +41,11 @@ class DefaultCallerSupplier implements Supplier<Method> {
         });
 
         return method.get();
+    }
+
+    private static boolean isLambdaMethod(final StackWalker.StackFrame stackFrame) {
+        return stackFrame != null && stackFrame.getMethodName() != null &&
+                stackFrame.getMethodName().contains(LAMBDA_KEYWORD);
     }
 
     private static Method getMethodFromStackFrame(final StackWalker.StackFrame stackFrame) throws NoSuchMethodException {
