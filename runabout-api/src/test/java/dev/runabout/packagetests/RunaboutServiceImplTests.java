@@ -7,6 +7,8 @@ import dev.runabout.fixtures.ConcreteClass2;
 import dev.runabout.fixtures.Logic1;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,9 +26,13 @@ public class RunaboutServiceImplTests {
 
     @Test
     void runaboutLoggerTest() {
-        final Logic1 logic1 = new Logic1(Map.of("ethan", "bond", "john", "adams"));
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final Logic1 logic1 = new Logic1(outputStream, Map.of("ethan", "bond", "john", "adams"));
         final ConcreteClass1 concreteClass1 = new ConcreteClass1("Ethan", Set.of("aa", "bb"));
         final ConcreteClass2 concreteClass2 = new ConcreteClass2(1, Map.of("a", "b", "c", "d"));
-        logic1.printValuesLambdaLogger(concreteClass1, concreteClass2);
+        final String output = logic1.concatValuesLayerLogger(concreteClass1, concreteClass2);
+
+        final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
+        System.out.println(loggerOutput);
     }
 }

@@ -1,42 +1,48 @@
 package dev.runabout.fixtures;
 
-import dev.runabout.RunaboutService;
+import dev.runabout.RunaboutServiceBuilder;
 
-import java.util.List;
+import java.io.OutputStream;
 import java.util.Map;
+import java.util.Set;
 
 public class Logic1 {
 
-    private static final Logger logger = new Logger();
+    private final Logger logger;
+    private final Map<String, String> map;
 
-    final Map<String, String> map;
-
-    public Logic1(Map<String, String> map) {
+    public Logic1(final OutputStream outputStream, final Map<String, String> map) {
+        this.logger = new Logger(outputStream);
         this.map = map;
     }
 
-    public void printValuesLayerLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
+    public String concatValuesLayerLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
         logger.runaboutInfo(this, cc1, cc2);
-        for (final String key : cc1.getKeys()) {
-            System.out.println(key);
-        }
-        for (final Map.Entry<String, String> value : cc2.getData().entrySet()) {
-            System.out.println(value);
-        }
+        return concatValues(cc1, cc2);
     }
 
-    public void printValuesLambdaLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
-        logger.info(() -> RunaboutService.getService().toRunaboutString(this, cc1, cc2));
-        cc1.getKeys().forEach(System.out::println);
-        cc2.getData().entrySet().forEach(System.out::println);
+    public String concatValuesLambdaLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
+        logger.info(() -> RunaboutServiceBuilder.getDefaultBuilder()
+                .setCallerClassBlacklist(Set.of(Logger.class))
+                .build().toRunaboutString(this, cc1, cc2));
+        return concatValues(cc1, cc2);
     }
 
-    private void printValues(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
+    private String concatValues(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
+        final StringBuilder builder = new StringBuilder(", ");
+
+        for (final String value : map.values()) {
+            builder.append(value);
+        }
+
         for (final String key : cc1.getKeys()) {
-            System.out.println(key);
+            builder.append(key);
         }
+
         for (final Map.Entry<String, String> value : cc2.getData().entrySet()) {
-            System.out.println(value);
+            builder.append(value);
         }
+
+        return builder.toString();
     }
 }
