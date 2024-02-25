@@ -23,6 +23,8 @@ public class GenericSerializer implements RunaboutSerializer {
             dependencies.addAll(dataInput.getDependencies());
             dependencies.add(ConcreteClass2.class.getCanonicalName());
             input = RunaboutInput.of(eval, dependencies);
+        } else if (object instanceof ThrowsClass2) {
+            throw new RuntimeException(ThrowsClass2.EXCEPTION_MESSAGE);
         }
 
         return input;

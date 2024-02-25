@@ -3,9 +3,12 @@ package dev.runabout.packagetests;
 import dev.runabout.JsonObject;
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
+import dev.runabout.RunaboutServiceBuilder;
 import dev.runabout.fixtures.ConcreteClass1;
 import dev.runabout.fixtures.ConcreteClass2;
 import dev.runabout.fixtures.Logic1;
+import dev.runabout.fixtures.ThrowsClass1;
+import dev.runabout.fixtures.ThrowsClass2;
 import dev.runabout.fixtures.UnknownClass1;
 import org.bson.Document;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,5 +68,37 @@ public class RunaboutServiceImplTests {
         final Document input = inputs.get(0);
         Assertions.assertEquals("", input.getString("eval"));
         Assertions.assertTrue(input.get("dependencies", List.class).isEmpty());
+    }
+
+    @Test
+    void testInstanceSerializerThrows() {
+        final List<Throwable> thrown = new ArrayList<>();
+        final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder.getDefaultBuilder()
+                .setThrowableConsumer(thrown::add)
+                .build();
+        final ThrowsClass1 throwsInstance = new ThrowsClass1("george", "washington");
+        final JsonObject jsonObject = runaboutService.toRunaboutJson(throwsInstance);
+        final Document document = Document.parse(jsonObject.toJson());
+        final Document input = document.getList("inputs", Document.class).get(0);
+        Assertions.assertEquals("", input.getString("eval"));
+        Assertions.assertTrue(input.get("dependencies", List.class).isEmpty());
+        Assertions.assertEquals(1, thrown.size());
+        Assertions.assertEquals(ThrowsClass1.EXCEPTION_MESSAGE, thrown.get(0).getMessage());
+    }
+
+    @Test
+    void testGenericSerializerThrows() {
+        final List<Throwable> thrown = new ArrayList<>();
+        final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder.getDefaultBuilder()
+                .setThrowableConsumer(thrown::add)
+                .build();
+        final ThrowsClass2 throwsInstance = new ThrowsClass2("george", "washington");
+        final JsonObject jsonObject = runaboutService.toRunaboutJson(throwsInstance);
+        final Document document = Document.parse(jsonObject.toJson());
+        final Document input = document.getList("inputs", Document.class).get(0);
+        Assertions.assertEquals("", input.getString("eval"));
+        Assertions.assertTrue(input.get("dependencies", List.class).isEmpty());
+        Assertions.assertEquals(1, thrown.size());
+        Assertions.assertEquals(ThrowsClass2.EXCEPTION_MESSAGE, thrown.get(0).getMessage());
     }
 }
