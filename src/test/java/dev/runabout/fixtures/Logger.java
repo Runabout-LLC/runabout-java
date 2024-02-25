@@ -12,12 +12,10 @@ public class Logger {
 
     private final PrintWriter printWriter;
 
-//    final RunaboutService<?> runaboutService = RunaboutServiceBuilder
-//            .getDefaultBuilder()
-//            .setCallerClassBlacklist(Set.of(Logger.class))
-//            .build();
-
-    final RunaboutService<?> runaboutService = TestUtils.getDocumentRunaboutService();
+    final RunaboutService<?> runaboutService = RunaboutServiceBuilder
+            .getDefaultBuilder()
+            .setCallerClassBlacklist(Set.of(Logger.class))
+            .build();
 
     public Logger(OutputStream outputStream) {
         this.printWriter = new PrintWriter(outputStream);

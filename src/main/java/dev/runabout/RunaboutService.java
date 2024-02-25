@@ -86,6 +86,7 @@ public interface RunaboutService<T extends JsonObject> {
     /**
      * Converts a Method and set of objects to a Runabout JSON string.
      * See {@link #toRunaboutJson(Object...)} for more info.
+     * @param method The method that the objects are arguments for.
      * @param objects The objects to convert to Runabout inputs in JSON.
      * @return A JSON object as a String.
      */

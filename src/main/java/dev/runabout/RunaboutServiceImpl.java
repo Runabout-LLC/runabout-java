@@ -60,11 +60,6 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public T toRunaboutJson(Object... objects) {
-        return toRunaboutJson(callerSupplier.get(), objects);
-    }
-
-    @Override
     public T toRunaboutJson(Method method, Object... objects) {
 
         Objects.requireNonNull(method, "RunaboutService unable to determine caller method."); // TODO different ex type

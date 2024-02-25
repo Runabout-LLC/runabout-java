@@ -112,7 +112,6 @@ class DefaultSerializer {
 
         final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
-        allDependencies.add(Map.class.getCanonicalName());
         allDependencies.add(HashMap.class.getCanonicalName());
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -140,7 +139,6 @@ class DefaultSerializer {
 
         final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
-        allDependencies.add(List.class.getCanonicalName());
         allDependencies.add(ArrayList.class.getCanonicalName());
 
         for (Object item : list) {
@@ -163,7 +161,6 @@ class DefaultSerializer {
 
         final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
-        allDependencies.add(Set.class.getCanonicalName());
         allDependencies.add(HashSet.class.getCanonicalName());
 
         for (Object item : set) {
