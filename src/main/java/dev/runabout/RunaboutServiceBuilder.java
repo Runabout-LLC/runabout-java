@@ -3,6 +3,7 @@ package dev.runabout;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -15,7 +16,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Supplier<Method> callerSupplier;
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
-    private boolean shouldThrow = false;
+    private Consumer<Throwable> throwableConsumer;
     private boolean excludeSuper = false;
 
     private final Supplier<T> jsonFactory;
@@ -83,14 +84,14 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     }
 
     /**
-     * Sets whether the RunaboutService should throw exceptions when it encounters them.
-     * By default, the service will not throw exceptions.
+     * Sets a consumer for any throwables that occur during the RunaboutService's operation.
+     * By default, the service will not throw exceptions, but will throw errors.
      *
-     * @param shouldThrow Whether the service should throw exceptions.
+     * @param throwableConsumer a consumer
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setShouldThrow(boolean shouldThrow) {
-        this.shouldThrow = shouldThrow;
+    public RunaboutServiceBuilder<T> setThrowableConsumer(Consumer<Throwable> throwableConsumer) {
+        this.throwableConsumer = throwableConsumer;
         return this;
     }
 
@@ -106,7 +107,6 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         this.excludeSuper = excludeSuper;
         return this;
     }
-
     /**
      * Builds the RunaboutService.
      *
@@ -125,7 +125,16 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final RunaboutSerializer customSerializerFinal = Optional.ofNullable(this.customSerializer)
                 .orElseGet(RunaboutSerializer::getSerializer);
 
-        return new RunaboutServiceImpl<>(shouldThrow, excludeSuper, callerSupplierFinal, customSerializerFinal,
-                jsonFactory);
+        final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
+                .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
+
+        return new RunaboutServiceImpl<>(excludeSuper, throwableConsumerFinal, callerSupplierFinal,
+                customSerializerFinal, jsonFactory);
+    }
+
+    private static void defaultThrowableConsumer(Throwable t) {
+        if (t instanceof Error) {
+            throw (Error) t;
+        }
     }
 }

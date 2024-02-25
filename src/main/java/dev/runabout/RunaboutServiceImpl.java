@@ -9,21 +9,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
-    private final boolean shouldThrow;
     private final boolean excludeSuper;
+    private final Consumer<Throwable> throwableConsumer;
     private final Supplier<Method> callerSupplier;
     private final RunaboutSerializer customSerializer;
     private final Supplier<T> jsonFactory;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
-    RunaboutServiceImpl(boolean shouldThrow, boolean excludeSuper, Supplier<Method> callerSupplier,
-                               RunaboutSerializer customSerializer, Supplier<T> jsonFactory) {
-        this.shouldThrow = shouldThrow;
+    RunaboutServiceImpl(boolean excludeSuper, Consumer<Throwable> throwableConsumer, Supplier<Method> callerSupplier,
+                        RunaboutSerializer customSerializer, Supplier<T> jsonFactory) {
+        this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
         this.callerSupplier = callerSupplier;
         this.customSerializer = customSerializer;
@@ -122,14 +123,10 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         try {
             method.setAccessible(true);
             input = (RunaboutInput) method.invoke(object);
-        } catch (IllegalAccessException ex) {
-            if (this.shouldThrow) {
-                throw new RuntimeException(ex);
-            }
         } catch (InvocationTargetException e) {
-            if (e.getCause() != null && this.shouldThrow) {
-                throw new RuntimeException(e.getCause());
-            }
+            throwableConsumer.accept(e.getCause() != null ? e.getCause() : e);
+        } catch (Throwable t) {
+            throwableConsumer.accept(t);
         }
 
         return input;
@@ -141,10 +138,8 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         if (serializer != null) {
             try {
                 input = serializer.toRunaboutGeneric(o);
-            } catch (Exception ex) {
-                if (this.shouldThrow) {
-                    throw ex;
-                }
+            } catch (Throwable ex) {
+                throwableConsumer.accept(ex);
             }
         }
 
