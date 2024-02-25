@@ -35,7 +35,8 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
         if (clazz != String.class && clazz != Boolean.class &&
                 doesNotImplement(clazz, Number.class) &&
                 doesNotImplement(clazz, JsonObject.class)) {
-            throw new RuntimeException(); // TODO
+            throw new RunaboutException(String.format("Unknown list type for Runabout JsonObject: [%1$s]",
+                    clazz.getCanonicalName()));
         }
 
         super.put(key, values);

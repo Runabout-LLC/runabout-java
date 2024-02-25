@@ -63,7 +63,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     @Override
     public T toRunaboutJson(Method method, Object... objects) {
 
-        Objects.requireNonNull(method, "RunaboutService unable to determine caller method."); // TODO different ex type
+        Objects.requireNonNull(method, "RunaboutService unable to determine caller method.");
 
         final T json = jsonFactory.get();
 
@@ -122,7 +122,12 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         try {
             method.setAccessible(true);
-            input = (RunaboutInput) method.invoke(object);
+            final RunaboutInput tempInput = (RunaboutInput) method.invoke(object);
+
+            if (validInput(tempInput)) {
+                input = tempInput;
+            }
+
         } catch (InvocationTargetException e) {
             throwableConsumer.accept(e.getCause() != null ? e.getCause() : e);
         } catch (Throwable t) {
@@ -137,12 +142,22 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         if (serializer != null) {
             try {
-                input = serializer.toRunaboutGeneric(o);
+                final RunaboutInput tempInput = serializer.toRunaboutGeneric(o);
+
+                if (validInput(tempInput)) {
+                    input = tempInput;
+                }
+
             } catch (Throwable ex) {
                 throwableConsumer.accept(ex);
             }
         }
 
         return input;
+    }
+
+    private static boolean validInput(final RunaboutInput input) {
+        return input != null && input.getEval() != null && !input.getEval().isEmpty() &&
+                input.getDependencies() != null;
     }
 }

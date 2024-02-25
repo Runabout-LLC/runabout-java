@@ -1,6 +1,7 @@
 package dev.runabout;
 
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -49,7 +50,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @return The RunaboutServiceBuilder.
      */
     public RunaboutServiceBuilder<T> setCallerSupplier(Supplier<Method> callerSupplier) {
-        this.callerSupplier = callerSupplier;
+        this.callerSupplier = Objects.requireNonNull(callerSupplier, "Caller supplier cannot be null.");
         return this;
     }
 
@@ -64,7 +65,8 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @return The RunaboutServiceBuilder.
      */
     public RunaboutServiceBuilder<T> setCallerClassBlacklist(Set<Class<?>> callerClassBlacklist) {
-        this.callerClassBlacklist = callerClassBlacklist;
+        this.callerClassBlacklist = Objects.requireNonNull(callerClassBlacklist,
+                "Caller class blacklist cannot be null.");
         return this;
     }
 
@@ -79,7 +81,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @return The RunaboutServiceBuilder.
      */
     public RunaboutServiceBuilder<T> setCustomSerializer(RunaboutSerializer customSerializer) {
-        this.customSerializer = customSerializer;
+        this.customSerializer = Objects.requireNonNull(customSerializer, "Custom serializer cannot be null.");
         return this;
     }
 
@@ -91,7 +93,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @return The RunaboutServiceBuilder.
      */
     public RunaboutServiceBuilder<T> setThrowableConsumer(Consumer<Throwable> throwableConsumer) {
-        this.throwableConsumer = throwableConsumer;
+        this.throwableConsumer = Objects.requireNonNull(throwableConsumer, "Throwable consumer cannot be null.");
         return this;
     }
 
@@ -115,7 +117,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     public RunaboutService<T> build() {
 
         if (callerSupplier != null && callerClassBlacklist != null) {
-            throw new IllegalArgumentException(); // TODO
+            throw new RunaboutException("Caller supplier and caller class blacklist setters are mutually exclusive.");
         }
 
         final Set<Class<?>> callerClassBlacklistFinal = Optional.ofNullable(callerClassBlacklist).orElseGet(Set::of);
