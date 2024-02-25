@@ -39,6 +39,7 @@ public class DocumentJsonObject implements JsonObject {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> void put(String key, Class<T> clazz, List<T> values) {
 
         if (clazz == JsonObject.class) {
