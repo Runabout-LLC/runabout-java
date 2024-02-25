@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.function.Function;
 
 class DefaultSerializer {
@@ -36,6 +35,9 @@ class DefaultSerializer {
         // Singleton.
     }
 
+    /**
+     * Main entrypoint for serializing objects.
+     */
     public <T> RunaboutInput toRunaboutGenericRecursive(final T object, final RunaboutSerializer recursiveSerializer) {
 
         RunaboutInput input = null;
@@ -49,7 +51,12 @@ class DefaultSerializer {
         return Optional.ofNullable(input).orElseGet(() -> toRunaboutGeneric(object));
     }
 
-    public <T> RunaboutInput toRunaboutGeneric(final T object) {
+    <T> RunaboutInput toRunaboutGeneric(final T object) {
+
+        // Short circuit if object is null.
+        if (object == null) {
+            return RunaboutInput.of("null", Collections.emptySet());
+        }
 
         RunaboutInput input = null;
 
@@ -84,27 +91,26 @@ class DefaultSerializer {
             return RunaboutInput.of("new HashMap<>()", Set.of(HashMap.class.getCanonicalName()));
         }
 
-        final StringJoiner joiner = new StringJoiner(", ");
+        final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
         allDependencies.add(Map.class.getCanonicalName());
         allDependencies.add(HashMap.class.getCanonicalName());
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            if (entry.getValue() != null) {
-                final RunaboutInput serialKey = recursiveSerializer.toRunaboutGeneric(entry.getKey());
-                final RunaboutInput serialValue = recursiveSerializer.toRunaboutGeneric(entry.getValue());
-                if (serialKey == null || serialKey.getEval() == null || serialKey.getEval().isEmpty() ||
-                        serialValue == null || serialValue.getEval() == null || serialValue.getEval().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptySet());
-                }
-                final String entryString = "Map.entry(" + serialKey.getEval() + ", " + serialValue.getEval() + ")";
-                joiner.add(entryString);
-                allDependencies.addAll(serialKey.getDependencies());
-                allDependencies.addAll(serialValue.getDependencies());
+            final RunaboutInput serialKey = recursiveSerializer.toRunaboutGeneric(entry.getKey());
+            final RunaboutInput serialValue = recursiveSerializer.toRunaboutGeneric(entry.getValue());
+            // If either key/value cannot be serialized, return empty input.
+            if (serialKey == null || serialKey.getEval() == null || serialKey.getEval().isEmpty() ||
+                    serialValue == null || serialValue.getEval() == null || serialValue.getEval().isEmpty()) {
+                return RunaboutInput.of("", Collections.emptySet());
             }
+            final String entryString = "put(" + serialKey.getEval() + ", " + serialValue.getEval() + "); ";
+            builder.append(entryString);
+            allDependencies.addAll(serialKey.getDependencies());
+            allDependencies.addAll(serialValue.getDependencies());
         }
 
-        return RunaboutInput.of("new HashMap<>(Map.ofEntries(" + joiner + "))", allDependencies);
+        return RunaboutInput.of("new HashMap<>() {{ " + builder + "}}", allDependencies);
     }
 
     private static RunaboutInput listSerializer(final List<?> list, final RunaboutSerializer recursiveSerializer) {
@@ -113,7 +119,7 @@ class DefaultSerializer {
             return RunaboutInput.of("new ArrayList<>()", Set.of(ArrayList.class.getCanonicalName()));
         }
 
-        final StringJoiner joiner = new StringJoiner(", ");
+        final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
         allDependencies.add(List.class.getCanonicalName());
         allDependencies.add(ArrayList.class.getCanonicalName());
@@ -124,12 +130,12 @@ class DefaultSerializer {
                 if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
                     return RunaboutInput.of("", Collections.emptySet());
                 }
-                joiner.add(serialItem.getEval());
+                builder.append("add(").append(serialItem.getEval()).append("); ");
                 allDependencies.addAll(serialItem.getDependencies());
             }
         }
 
-        return RunaboutInput.of("new ArrayList<>(List.of(" + joiner + "))", allDependencies);
+        return RunaboutInput.of("new ArrayList<>() {{ " + builder + "}}", allDependencies);
     }
 
     private static RunaboutInput setSerializer(final Set<?> set, final RunaboutSerializer recursiveSerializer) {
@@ -138,7 +144,7 @@ class DefaultSerializer {
             return RunaboutInput.of("new HashSet<>()", Set.of(HashSet.class.getCanonicalName()));
         }
 
-        final StringJoiner joiner = new StringJoiner(", ");
+        final StringBuilder builder = new StringBuilder();
         final Set<String> allDependencies = new HashSet<>();
         allDependencies.add(Set.class.getCanonicalName());
         allDependencies.add(HashSet.class.getCanonicalName());
@@ -149,12 +155,12 @@ class DefaultSerializer {
                 if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
                     return RunaboutInput.of("", Collections.emptySet());
                 }
-                joiner.add(serialItem.getEval());
+                builder.append("add(").append(serialItem.getEval()).append("); ");
                 allDependencies.addAll(serialItem.getDependencies());
             }
         }
 
-        return RunaboutInput.of("new HashSet<>(Set.of(" + joiner + "))", allDependencies);
+        return RunaboutInput.of("new HashSet<>() {{ " + builder + "}}", allDependencies);
     }
 
     private static RunaboutInput stringSerializer(final String string) {

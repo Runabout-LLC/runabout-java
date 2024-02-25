@@ -168,7 +168,20 @@ public class DefaultSerializerTests {
         test.put("key2", 9);
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
-        Assertions.assertEquals("new HashMap<>(Map.ofEntries(Map.entry(\"key1\", (int) 7), Map.entry(\"key2\", (int) 9)))", runaboutInput.getEval());
+        Assertions.assertEquals("new HashMap<>() {{ put(\"key1\", (int) 7); put(\"key2\", (int) 9); }}", runaboutInput.getEval());
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(Map.class.getCanonicalName()));
+    }
+
+    @Test
+    void testMapContainingNull() {
+        final Map<String, Integer> test = new HashMap<>();
+        test.put("key1", 7);
+        test.put("key2", null);
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+        Assertions.assertEquals("new HashMap<>() {{ put(\"key1\", (int) 7); put(\"key2\", null); }}", runaboutInput.getEval());
         Assertions.assertEquals(2, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class.getCanonicalName()));
         Assertions.assertTrue(runaboutInput.getDependencies().contains(Map.class.getCanonicalName()));
@@ -180,7 +193,8 @@ public class DefaultSerializerTests {
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
 
-        final Set<String> potentialEvals = Set.of("new HashSet<>(Set.of(\"test1\", \"test2\"))", "new HashSet<>(Set.of(\"test2\", \"test1\"))");
+        final Set<String> potentialEvals = Set.of("new HashSet<>() {{ add(\"test1\"); add(\"test2\"); }}",
+                "new HashSet<>() {{ add(\"test2\"); add(\"test1\"); }}");
         Assertions.assertTrue(potentialEvals.contains(runaboutInput.getEval()));
         Assertions.assertEquals(2, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(Set.class.getCanonicalName()));
@@ -193,7 +207,7 @@ public class DefaultSerializerTests {
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
 
-        Assertions.assertEquals("new ArrayList<>(List.of(\"test1\", \"test2\"))", runaboutInput.getEval());
+        Assertions.assertEquals("new ArrayList<>() {{ add(\"test1\"); add(\"test2\"); }}", runaboutInput.getEval());
         Assertions.assertEquals(2, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(List.class.getCanonicalName()));
         Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));

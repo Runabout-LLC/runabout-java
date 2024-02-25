@@ -32,6 +32,12 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
     @Override
     public RunaboutInput serialize(Object object) {
+
+        // Short circuit if object is null.
+        if (object == null) {
+            return RunaboutInput.of("null", Collections.emptySet());
+        }
+
         RunaboutInput input;
 
         input = invokeInstanceSerializer(object);
