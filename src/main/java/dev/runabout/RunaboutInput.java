@@ -6,12 +6,11 @@ import java.util.Set;
  * Interface representing an input for a Runabout scenario.
  * The Runabout IDE plugin uses String snippets of java expressions to run methods directly.
  * A Runabout input consists of an eval String and a set of dependencies. The eval String is a java expression
- * which evaluates to an object. The dependencies are the fully qualified class names of all classes used in
- * the eval String.
+ * which evaluates to an object. The dependencies are the classes used in the eval String.
  */
 public interface RunaboutInput {
 
-    static RunaboutInput of(final String eval, final Set<String> dependencies) {
+    static RunaboutInput of(final String eval, final Set<Class<?>> dependencies) {
         return new RunaboutInput() {
 
             @Override
@@ -20,7 +19,7 @@ public interface RunaboutInput {
             }
 
             @Override
-            public Set<String> getDependencies() {
+            public Set<Class<?>> getDependencies() {
                 return dependencies;
             }
         };
@@ -34,10 +33,9 @@ public interface RunaboutInput {
     String getEval();
 
     /**
-     * Gets the dependencies for the Runabout input, which are the fully qualified class names of all
-     * classes used in the eval String.
+     * Gets all dependent classes for the Runabout Input; All classes used in the eval String.
      *
-     * @return A set of the dependencies.
+     * @return A set of the dependent classes.
      */
-    Set<String> getDependencies();
+    Set<Class<?>> getDependencies();
 }

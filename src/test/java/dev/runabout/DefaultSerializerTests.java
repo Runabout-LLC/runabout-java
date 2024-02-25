@@ -144,19 +144,19 @@ public class DefaultSerializerTests {
         RunaboutInput runaboutInput = DefaultSerializer.getInstance().toRunaboutGeneric(test1);
         Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.VALUE1", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class));
 
         TestEnum test2 = TestEnum.test2;
         runaboutInput = DefaultSerializer.getInstance().toRunaboutGeneric(test2);
         Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.test2", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class));
 
         TestEnum test3 = TestEnum.V_3;
         runaboutInput = DefaultSerializer.getInstance().toRunaboutGeneric(test3);
         Assertions.assertEquals("dev.runabout.DefaultSerializerTests.TestEnum.V_3", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(TestEnum.class));
     }
 
     @Test
@@ -168,7 +168,7 @@ public class DefaultSerializerTests {
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
         Assertions.assertEquals("new HashMap<>() {{ put(\"key1\", (int) 7); put(\"key2\", (int) 9); }}", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class DefaultSerializerTests {
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
         Assertions.assertEquals("new HashMap<>() {{ put(\"key1\", (int) 7); put(\"key2\", null); }}", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashMap.class));
     }
 
     @Test
@@ -216,7 +216,7 @@ public class DefaultSerializerTests {
                 "new HashSet<>() {{ add(\"test2\"); add(\"test1\"); }}");
         Assertions.assertTrue(potentialEvals.contains(runaboutInput.getEval()));
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class));
     }
 
     @Test
@@ -231,7 +231,7 @@ public class DefaultSerializerTests {
                 "new HashSet<>() {{ add(null); add(\"test1\"); }}");
         Assertions.assertTrue(potentialEvals.contains(runaboutInput.getEval()));
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class));
     }
 
     @Test
@@ -264,7 +264,7 @@ public class DefaultSerializerTests {
 
         Assertions.assertEquals("new ArrayList<>() {{ add(\"test1\"); add(\"test2\"); }}", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class));
     }
 
     @Test
@@ -277,7 +277,7 @@ public class DefaultSerializerTests {
 
         Assertions.assertEquals("new ArrayList<>() {{ add(\"test1\"); add(null); }}", runaboutInput.getEval());
         Assertions.assertEquals(1, runaboutInput.getDependencies().size());
-        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class));
     }
 
     @Test

@@ -36,9 +36,9 @@ public abstract class AbstractClass1 {
         final RunaboutInput keysInput = runaboutService.serialize(keys);
         final String className = this.getClass().getSimpleName();
         final String eval = String.format("new %1$s(%2$s, %3$s)", className, nameInput.getEval(), keysInput.getEval());
-        final Set<String> dependencies = new HashSet<>(nameInput.getDependencies());
+        final Set<Class<?>> dependencies = new HashSet<>(nameInput.getDependencies());
         dependencies.addAll(keysInput.getDependencies());
-        dependencies.add(this.getClass().getCanonicalName());
+        dependencies.add(this.getClass());
         return RunaboutInput.of(eval, dependencies);
     }
 }

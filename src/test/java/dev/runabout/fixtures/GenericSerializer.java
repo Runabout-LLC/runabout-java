@@ -19,9 +19,9 @@ public class GenericSerializer implements RunaboutSerializer {
             final RunaboutInput idInput = RunaboutService.getService().serialize(concreteClass2.getId());
             final RunaboutInput dataInput = RunaboutService.getService().serialize(concreteClass2.getData());
             final String eval = String.format("new ConcreteClass2(%1$s, %2$s)", idInput.getEval(), dataInput.getEval());
-            final Set<String> dependencies = new HashSet<>(idInput.getDependencies());
+            final Set<Class<?>> dependencies = new HashSet<>(idInput.getDependencies());
             dependencies.addAll(dataInput.getDependencies());
-            dependencies.add(ConcreteClass2.class.getCanonicalName());
+            dependencies.add(ConcreteClass2.class);
             input = RunaboutInput.of(eval, dependencies);
         } else if (object instanceof ThrowsClass2) {
             throw new RuntimeException(ThrowsClass2.EXCEPTION_MESSAGE);

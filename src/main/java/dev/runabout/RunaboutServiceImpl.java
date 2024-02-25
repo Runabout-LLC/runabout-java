@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
@@ -74,11 +75,15 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         final List<JsonObject> inputs = new ArrayList<>();
         for (final Object object: objects) {
+
             final RunaboutInput input = serialize(object);
             final T inputJson = jsonFactory.get();
             inputJson.put(RunaboutConstants.TYPE_KEY, object.getClass().getCanonicalName());
             inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
-            inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
+
+            final List<String> dependencies = input.getDependencies().stream().map(Class::getCanonicalName)
+                    .collect(Collectors.toList());
+            inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, dependencies);
             inputs.add(inputJson);
         }
 
