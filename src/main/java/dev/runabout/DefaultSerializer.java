@@ -26,6 +26,7 @@ class DefaultSerializer {
     );
 
     private static final RunaboutInput NULL_INPUT = RunaboutInput.of("null", Collections.emptySet());
+    private static final RunaboutInput EMPTY_INPUT = RunaboutInput.of("", Collections.emptySet());
 
     private static final DefaultSerializer INSTANCE = new DefaultSerializer();
 
@@ -76,11 +77,16 @@ class DefaultSerializer {
         return Optional.ofNullable(input)
                 .orElseGet(() -> Optional.ofNullable(serializers.get(object.getClass()))
                         .map(serializer -> ((TypedSerializer<T>) serializer).apply(object))
-                        .orElseGet(() -> RunaboutInput.of("", Collections.emptySet())));
+                        .orElse(EMPTY_INPUT)
+                );
     }
 
     static RunaboutInput getNullInput() {
         return NULL_INPUT;
+    }
+
+    static RunaboutInput getEmptyInput() {
+        return EMPTY_INPUT;
     }
 
     private static RunaboutInput collectionSerializer(final Collection<?> collection,
@@ -140,7 +146,7 @@ class DefaultSerializer {
         for (Object item : list) {
             final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
             if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                return RunaboutInput.of("", Collections.emptySet());
+                return EMPTY_INPUT;
             }
             builder.append("add(").append(serialItem.getEval()).append("); ");
             allDependencies.addAll(serialItem.getDependencies());
@@ -163,7 +169,7 @@ class DefaultSerializer {
         for (Object item : set) {
             final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
             if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                return RunaboutInput.of("", Collections.emptySet());
+                return EMPTY_INPUT;
             }
             builder.append("add(").append(serialItem.getEval()).append("); ");
             allDependencies.addAll(serialItem.getDependencies());

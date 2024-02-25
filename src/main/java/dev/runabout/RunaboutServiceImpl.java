@@ -50,7 +50,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
             input = invokeSafe(o -> defaultSerializer.toRunaboutGenericRecursive(o, this::serialize), object);
         }
 
-        return Optional.ofNullable(input).orElseGet(() -> RunaboutInput.of("", Collections.emptySet()));
+        return Optional.ofNullable(input).orElseGet(DefaultSerializer::getEmptyInput);
     }
 
     @Override

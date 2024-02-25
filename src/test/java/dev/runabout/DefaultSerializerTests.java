@@ -186,6 +186,29 @@ public class DefaultSerializerTests {
     }
 
     @Test
+    void testMapRecursiveSerializerFails() {
+        final Map<String, Map<String, Integer>> test = new HashMap<>();
+        test.put("key1", Map.of("key2", 7));
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+
+        final RunaboutSerializer nullSerializer = o -> null;
+        final RunaboutInput runaboutInput1 = defaultSerializer.toRunaboutGenericRecursive(test, nullSerializer);
+        Assertions.assertEquals("", runaboutInput1.getEval());
+        Assertions.assertTrue(runaboutInput1.getDependencies().isEmpty());
+
+        final RunaboutSerializer emptySerializer = o -> RunaboutInput.of("", Set.of());
+        final RunaboutInput runaboutInput2 = defaultSerializer.toRunaboutGenericRecursive(test, emptySerializer);
+        Assertions.assertEquals("", runaboutInput2.getEval());
+        Assertions.assertTrue(runaboutInput2.getDependencies().isEmpty());
+
+        final RunaboutSerializer throwsSerializer = o -> {
+            throw new RuntimeException("Test");
+        };
+        Assertions.assertThrows(RuntimeException.class,
+                () -> defaultSerializer.toRunaboutGenericRecursive(test, throwsSerializer));
+    }
+
+    @Test
     void testSimpleSet() {
         final Set<String> test = Set.of("test1", "test2");
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
@@ -216,6 +239,28 @@ public class DefaultSerializerTests {
     }
 
     @Test
+    void testSetRecursiveSerializerFails() {
+        final Set<String> test = Set.of("test1", "test2");
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+
+        final RunaboutSerializer nullSerializer = o -> null;
+        final RunaboutInput runaboutInput1 = defaultSerializer.toRunaboutGenericRecursive(test, nullSerializer);
+        Assertions.assertEquals("", runaboutInput1.getEval());
+        Assertions.assertTrue(runaboutInput1.getDependencies().isEmpty());
+
+        final RunaboutSerializer emptySerializer = o -> RunaboutInput.of("", Set.of());
+        final RunaboutInput runaboutInput2 = defaultSerializer.toRunaboutGenericRecursive(test, emptySerializer);
+        Assertions.assertEquals("", runaboutInput2.getEval());
+        Assertions.assertTrue(runaboutInput2.getDependencies().isEmpty());
+
+        final RunaboutSerializer throwsSerializer = o -> {
+            throw new RuntimeException("Test");
+        };
+        Assertions.assertThrows(RuntimeException.class,
+                () -> defaultSerializer.toRunaboutGenericRecursive(test, throwsSerializer));
+    }
+
+    @Test
     void testSimpleList() {
         final List<String> test = List.of("test1", "test2");
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
@@ -239,6 +284,28 @@ public class DefaultSerializerTests {
         Assertions.assertEquals(2, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(List.class.getCanonicalName()));
         Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
+    }
+
+    @Test
+    void testListRecursiveSerializerFails() {
+        final List<String> test = List.of("test1", "test2");
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+
+        final RunaboutSerializer nullSerializer = o -> null;
+        final RunaboutInput runaboutInput1 = defaultSerializer.toRunaboutGenericRecursive(test, nullSerializer);
+        Assertions.assertEquals("", runaboutInput1.getEval());
+        Assertions.assertTrue(runaboutInput1.getDependencies().isEmpty());
+
+        final RunaboutSerializer emptySerializer = o -> RunaboutInput.of("", Set.of());
+        final RunaboutInput runaboutInput2 = defaultSerializer.toRunaboutGenericRecursive(test, emptySerializer);
+        Assertions.assertEquals("", runaboutInput2.getEval());
+        Assertions.assertTrue(runaboutInput2.getDependencies().isEmpty());
+
+        final RunaboutSerializer throwsSerializer = o -> {
+            throw new RuntimeException("Test");
+        };
+        Assertions.assertThrows(RuntimeException.class,
+                () -> defaultSerializer.toRunaboutGenericRecursive(test, throwsSerializer));
     }
 
     private enum TestEnum {
