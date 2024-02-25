@@ -25,6 +25,8 @@ class DefaultSerializer {
             Map.entry(Character.class, (TypedSerializer<Character>) DefaultSerializer::charSerializer)
     );
 
+    private static final RunaboutInput NULL_INPUT = RunaboutInput.of("null", Collections.emptySet());
+
     private static final DefaultSerializer INSTANCE = new DefaultSerializer();
 
     public static DefaultSerializer getInstance() {
@@ -40,6 +42,10 @@ class DefaultSerializer {
      */
     public <T> RunaboutInput toRunaboutGenericRecursive(final T object, final RunaboutSerializer recursiveSerializer) {
 
+        if (object == null) {
+            return NULL_INPUT;
+        }
+
         RunaboutInput input = null;
 
         if (object instanceof Map<?,?>) {
@@ -51,11 +57,14 @@ class DefaultSerializer {
         return Optional.ofNullable(input).orElseGet(() -> toRunaboutGeneric(object));
     }
 
+    //
+    // Suppress warnings for unchecked cast to TypedSerializer<T>. We know its safe based on composition of the map.
+    //
+    @SuppressWarnings("unchecked")
     <T> RunaboutInput toRunaboutGeneric(final T object) {
 
-        // Short circuit if object is null.
         if (object == null) {
-            return RunaboutInput.of("null", Collections.emptySet());
+            return NULL_INPUT;
         }
 
         RunaboutInput input = null;
@@ -68,6 +77,10 @@ class DefaultSerializer {
                 .orElseGet(() -> Optional.ofNullable(serializers.get(object.getClass()))
                         .map(serializer -> ((TypedSerializer<T>) serializer).apply(object))
                         .orElseGet(() -> RunaboutInput.of("", Collections.emptySet())));
+    }
+
+    static RunaboutInput getNullInput() {
+        return NULL_INPUT;
     }
 
     private static RunaboutInput collectionSerializer(final Collection<?> collection,
@@ -125,14 +138,12 @@ class DefaultSerializer {
         allDependencies.add(ArrayList.class.getCanonicalName());
 
         for (Object item : list) {
-            if (item != null) {
-                final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
-                if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptySet());
-                }
-                builder.append("add(").append(serialItem.getEval()).append("); ");
-                allDependencies.addAll(serialItem.getDependencies());
+            final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
+            if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
+                return RunaboutInput.of("", Collections.emptySet());
             }
+            builder.append("add(").append(serialItem.getEval()).append("); ");
+            allDependencies.addAll(serialItem.getDependencies());
         }
 
         return RunaboutInput.of("new ArrayList<>() {{ " + builder + "}}", allDependencies);
@@ -150,14 +161,12 @@ class DefaultSerializer {
         allDependencies.add(HashSet.class.getCanonicalName());
 
         for (Object item : set) {
-            if (item != null) {
-                final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
-                if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                    return RunaboutInput.of("", Collections.emptySet());
-                }
-                builder.append("add(").append(serialItem.getEval()).append("); ");
-                allDependencies.addAll(serialItem.getDependencies());
+            final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
+            if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
+                return RunaboutInput.of("", Collections.emptySet());
             }
+            builder.append("add(").append(serialItem.getEval()).append("); ");
+            allDependencies.addAll(serialItem.getDependencies());
         }
 
         return RunaboutInput.of("new HashSet<>() {{ " + builder + "}}", allDependencies);

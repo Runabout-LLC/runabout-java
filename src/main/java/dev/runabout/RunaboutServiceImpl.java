@@ -35,7 +35,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         // Short circuit if object is null.
         if (object == null) {
-            return RunaboutInput.of("null", Collections.emptySet());
+            return DefaultSerializer.getNullInput();
         }
 
         RunaboutInput input;

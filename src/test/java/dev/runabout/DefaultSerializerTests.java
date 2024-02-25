@@ -1,7 +1,5 @@
 package dev.runabout;
 
-import dev.runabout.DefaultSerializer;
-import dev.runabout.RunaboutInput;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -202,12 +200,42 @@ public class DefaultSerializerTests {
     }
 
     @Test
+    void testSetContainingNull() {
+        final Set<String> test = new HashSet<>();
+        test.add("test1");
+        test.add(null);
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+
+        final Set<String> potentialEvals = Set.of("new HashSet<>() {{ add(\"test1\"); add(null); }}",
+                "new HashSet<>() {{ add(null); add(\"test1\"); }}");
+        Assertions.assertTrue(potentialEvals.contains(runaboutInput.getEval()));
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(Set.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(HashSet.class.getCanonicalName()));
+    }
+
+    @Test
     void testSimpleList() {
         final List<String> test = List.of("test1", "test2");
         final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
         final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
 
         Assertions.assertEquals("new ArrayList<>() {{ add(\"test1\"); add(\"test2\"); }}", runaboutInput.getEval());
+        Assertions.assertEquals(2, runaboutInput.getDependencies().size());
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(List.class.getCanonicalName()));
+        Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
+    }
+
+    @Test
+    void testListContainingNull() {
+        final List<String> test = new ArrayList<>();
+        test.add("test1");
+        test.add(null);
+        final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
+        final RunaboutInput runaboutInput = defaultSerializer.toRunaboutGenericRecursive(test, defaultSerializer::toRunaboutGeneric);
+
+        Assertions.assertEquals("new ArrayList<>() {{ add(\"test1\"); add(null); }}", runaboutInput.getEval());
         Assertions.assertEquals(2, runaboutInput.getDependencies().size());
         Assertions.assertTrue(runaboutInput.getDependencies().contains(List.class.getCanonicalName()));
         Assertions.assertTrue(runaboutInput.getDependencies().contains(ArrayList.class.getCanonicalName()));
