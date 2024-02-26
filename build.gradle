@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
     id 'signing'
+    id 'cl.franciscosolis.sonatype-central-upload' version '1.0.0'
 }
 
 group = 'dev.runabout'
@@ -87,4 +88,18 @@ signing {
     def signingPassword = findProperty("signingPassword")
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign publishing.publications.mavenJava
+}
+
+sonatypeCentralUpload {
+    username = findProperty('sonatypeUsername')
+    password = findProperty('sonatypePassword')
+
+    archives = files("${buildDir}/libs/runabout-java-${version}.jar",
+            "${buildDir}/libs/runabout-java-${version}-javadoc.jar",
+            "${buildDir}/libs/runabout-java-${version}-sources.jar")
+    pom = file("$buildDir/publications/mavenJava/pom-default.xml")
+
+    signingKey = findProperty("signingKey")
+    signingKeyPassphrase = findProperty("signingPassword")
+    publicKey = findProperty("signingPublicKey")
 }
