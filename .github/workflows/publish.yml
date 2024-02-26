@@ -6,7 +6,6 @@ on:
 jobs:
   publish:
     name: Publish Artifacts
-    needs: [build]
     runs-on: ubuntu-latest
 
     steps:
