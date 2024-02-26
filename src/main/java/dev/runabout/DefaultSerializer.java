@@ -107,12 +107,12 @@ class DefaultSerializer {
 
         // Short circuit for empty map
         if (map.isEmpty()) {
-            return RunaboutInput.of("new HashMap<>()", Set.of(HashMap.class));
+            return RunaboutInput.of("new HashMap<>()", Set.of(HashMap.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
-        final Set<Class<?>> allDependencies = new HashSet<>();
-        allDependencies.add(HashMap.class);
+        final Set<String> allDependencies = new HashSet<>();
+        allDependencies.add(HashMap.class.getCanonicalName());
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             final RunaboutInput serialKey = recursiveSerializer.toRunaboutGeneric(entry.getKey());
@@ -134,12 +134,12 @@ class DefaultSerializer {
     private static RunaboutInput listSerializer(final List<?> list, final RunaboutSerializer recursiveSerializer) {
 
         if (list.isEmpty()) {
-            return RunaboutInput.of("new ArrayList<>()", Set.of(ArrayList.class));
+            return RunaboutInput.of("new ArrayList<>()", Set.of(ArrayList.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
-        final Set<Class<?>> allDependencies = new HashSet<>();
-        allDependencies.add(ArrayList.class);
+        final Set<String> allDependencies = new HashSet<>();
+        allDependencies.add(ArrayList.class.getCanonicalName());
 
         for (Object item : list) {
             final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
@@ -156,12 +156,12 @@ class DefaultSerializer {
     private static RunaboutInput setSerializer(final Set<?> set, final RunaboutSerializer recursiveSerializer) {
 
         if (set.isEmpty()) {
-            return RunaboutInput.of("new HashSet<>()", Set.of(HashSet.class));
+            return RunaboutInput.of("new HashSet<>()", Set.of(HashSet.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
-        final Set<Class<?>> allDependencies = new HashSet<>();
-        allDependencies.add(HashSet.class);
+        final Set<String> allDependencies = new HashSet<>();
+        allDependencies.add(HashSet.class.getCanonicalName());
 
         for (Object item : set) {
             final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
@@ -190,7 +190,7 @@ class DefaultSerializer {
 
     private static RunaboutInput enumSerializer(final Enum<?> e) {
         return RunaboutInput.of(e.getClass().getCanonicalName() + "." + e.name(),
-                Set.of(e.getClass()));
+                Set.of(e.getClass().getCanonicalName()));
     }
 
     private interface TypedSerializer<T> extends Function<T, RunaboutInput> {
