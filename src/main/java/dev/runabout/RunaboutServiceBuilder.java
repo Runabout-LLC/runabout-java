@@ -1,6 +1,7 @@
 package dev.runabout;
 
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -14,11 +15,12 @@ import java.util.function.Supplier;
  */
 public class RunaboutServiceBuilder<T extends JsonObject> {
 
+    private boolean excludeSuper = false;
     private Supplier<Method> callerSupplier;
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
     private Consumer<Throwable> throwableConsumer;
-    private boolean excludeSuper = false;
+    private Supplier<String> datetimeSupplier;
 
     private final Supplier<T> jsonFactory;
 
@@ -109,6 +111,20 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         this.excludeSuper = excludeSuper;
         return this;
     }
+
+    /**
+     * Sets the datetime supplier for the RunaboutService.
+     * The supplier should return the current datetime UTC as an ISO-8601 formatted string.
+     * By default, the supplier will return the current datetime using {@link Instant#now()}.
+     *
+     * @param datetimeSupplier The datetime supplier.
+     * @return The RunaboutServiceBuilder.
+     */
+    public RunaboutServiceBuilder<T> setDatetimeSupplier(Supplier<String> datetimeSupplier) {
+        this.datetimeSupplier = datetimeSupplier;
+        return this;
+    }
+
     /**
      * Builds the RunaboutService.
      *
@@ -130,8 +146,11 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
                 .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
 
+        final Supplier<String> datetimeSupplier = Optional.ofNullable(this.datetimeSupplier)
+                .orElseGet(() -> () -> Instant.now().toString());
+
         return new RunaboutServiceImpl<>(excludeSuper, throwableConsumerFinal, callerSupplierFinal,
-                customSerializerFinal, jsonFactory);
+                customSerializerFinal, jsonFactory, datetimeSupplier);
     }
 
     private static void defaultThrowableConsumer(Throwable t) {
