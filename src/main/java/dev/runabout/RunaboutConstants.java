@@ -12,4 +12,5 @@ class RunaboutConstants {
     public static final String EVAL_KEY = "eval";
     public static final String DEPENDENCIES_KEY = "dependencies";
     public static final String INPUTS_KEY = "inputs";
+    public static final String DATETIME_KEY = "datetime";
 }
