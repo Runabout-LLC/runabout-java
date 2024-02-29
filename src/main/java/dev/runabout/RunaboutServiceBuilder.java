@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -21,6 +22,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private RunaboutSerializer customSerializer;
     private Consumer<Throwable> throwableConsumer;
     private Supplier<String> datetimeSupplier;
+    private Function<Method, String> methodToStringFunction;
 
     private final Supplier<T> jsonFactory;
 
@@ -126,6 +128,20 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     }
 
     /**
+     * Sets the methodToStringFunction used to convert the caller method to a string for the JSON object
+     * in a way that Runabout knows how to read. The expected format is as follows:
+     * Fully qualified classname + "#" + method name + "(" + fully qualified argument types in order
+     * delimited by ", " ... + ")"
+     *
+     * @param methodToStringFunction The methodToString function.
+     * @return The RunaboutServiceBuilder.
+     */
+    public RunaboutServiceBuilder<T> setMethodToStringFunction(Function<Method, String> methodToStringFunction) {
+        this.methodToStringFunction = methodToStringFunction;
+        return this;
+    }
+
+    /**
      * Builds the RunaboutService.
      *
      * @return The RunaboutService.
@@ -146,11 +162,14 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
                 .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
 
-        final Supplier<String> datetimeSupplier = Optional.ofNullable(this.datetimeSupplier)
+        final Supplier<String> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
                 .orElseGet(() -> () -> Instant.now().toString());
 
+        final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
+                .orElse(RunaboutUtils::methodToRunaboutString);
+
         return new RunaboutServiceImpl<>(excludeSuper, throwableConsumerFinal, callerSupplierFinal,
-                customSerializerFinal, jsonFactory, datetimeSupplier);
+                customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal);
     }
 
     private static void defaultThrowableConsumer(Throwable t) {

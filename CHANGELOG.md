@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 - 2024-02-28
+### Added
+- Added a setter to the RunaboutServiceBuilder to provide custom Method toString implementations.
+
+### Changed
+- Changed the default MethodToString implementation. Runabout will support both the old and new versions.
+
 ## 1.0.0 - 2024-02-26
 Official release
 
