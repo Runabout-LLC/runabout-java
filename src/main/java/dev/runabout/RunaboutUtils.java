@@ -29,6 +29,12 @@ public class RunaboutUtils {
                 .replaceAll("(?<!\\\\)\\\"", "\\\\\"");
     }
 
+    /**
+     * Default implementation for converting a {@link Method} to a Runabout-readable String.
+     *
+     * @param method The method to create a string referencing.
+     * @return A string in a format known to Runabout.
+     */
     public static String methodToRunaboutString(final Method method) {
         return method.getDeclaringClass().getCanonicalName() + "#" + method.getName() + "(" +
                  Arrays.stream(method.getParameterTypes())
