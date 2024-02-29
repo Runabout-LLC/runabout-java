@@ -1,5 +1,9 @@
 package dev.runabout;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Utility class for Runabout.
  */
@@ -23,5 +27,12 @@ public class RunaboutUtils {
                 .replaceAll("(?<!\\\\)\\\\\\\"", "\\\\\\\\\\\\\"")
                 // go from 0 to 1 escape
                 .replaceAll("(?<!\\\\)\\\"", "\\\\\"");
+    }
+
+    public static String methodToRunaboutString(final Method method) {
+        return method.getDeclaringClass().getCanonicalName() + "#" + method.getName() + "(" +
+                 Arrays.stream(method.getParameterTypes())
+                         .map(Class::getCanonicalName)
+                         .collect(Collectors.joining(", ")) + ")";
     }
 }

@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
@@ -20,18 +21,20 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     private final RunaboutSerializer customSerializer;
     private final Supplier<T> jsonFactory;
     private final Supplier<String> datetimeSupplier;
+    private final Function<Method, String> methodToStringFunction;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
     RunaboutServiceImpl(boolean excludeSuper, Consumer<Throwable> throwableConsumer, Supplier<Method> callerSupplier,
                         RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
-                        Supplier<String> datetimeSupplier) {
+                        Supplier<String> datetimeSupplier, Function<Method, String> methodToStringFunction) {
         this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
         this.callerSupplier = callerSupplier;
         this.customSerializer = customSerializer;
         this.jsonFactory = jsonFactory;
         this.datetimeSupplier = datetimeSupplier;
+        this.methodToStringFunction = methodToStringFunction;
     }
 
     @Override
@@ -73,7 +76,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         json.put(RunaboutConstants.VERSION_KEY, RunaboutProperties.getInstance().getJsonContractVersion());
 
         // Put method data in json.
-        json.put(RunaboutConstants.METHOD_KEY, method.toString());
+        json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
 
         // Put datetime data in json.
         json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get());

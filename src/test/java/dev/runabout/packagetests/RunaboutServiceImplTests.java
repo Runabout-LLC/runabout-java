@@ -39,7 +39,7 @@ public class RunaboutServiceImplTests {
         final Document document = Document.parse(loggerOutput);
 
         final String method = document.getString("method");
-        Assertions.assertTrue(method.contains("Logic1.concatValuesLayerLogger"));
+        Assertions.assertTrue(method.contains("Logic1#concatValuesLayerLogger"));
 
         final List<Document> inputs = document.getList("inputs", Document.class);
         Assertions.assertEquals(3, inputs.size());
@@ -62,7 +62,7 @@ public class RunaboutServiceImplTests {
         final Document document = Document.parse(loggerOutput);
 
         final String method = document.getString("method");
-        Assertions.assertTrue(method.contains("Logic1.concatValuesLambdaLogger"));
+        Assertions.assertTrue(method.contains("Logic1#concatValuesLambdaLogger"));
 
         final List<Document> inputs = document.getList("inputs", Document.class);
         Assertions.assertEquals(3, inputs.size());
