@@ -128,6 +128,20 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     }
 
     /**
+     * Sets the methodToStringFunction used to convert the caller method to a string for the JSON object
+     * in a way that Runabout knows how to read. The expected format is as follows:
+     * Fully qualified classname + "#" + method name + "(" + fully qualified argument types in order
+     * delimited by ", " ... + ")"
+     *
+     * @param methodToStringFunction The methodToString function.
+     * @return The RunaboutServiceBuilder.
+     */
+    public RunaboutServiceBuilder<T> setMethodToStringFunction(Function<Method, String> methodToStringFunction) {
+        this.methodToStringFunction = methodToStringFunction;
+        return this;
+    }
+
+    /**
      * Builds the RunaboutService.
      *
      * @return The RunaboutService.
