@@ -19,6 +19,6 @@ public class CallerClass {
             public void run() {
                 method.set(callerSupplier.get());
             }
-        };
+        }.run();
     }
 }

@@ -30,6 +30,7 @@ class DefaultCallerSupplier implements Supplier<Method> {
 
         StackWalker.getInstance(options).forEach(stackFrame -> {
             if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
+                    !isAnonymousCaller(stackFrame) &&
                     stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
                     !callerClassBlackList.contains(stackFrame.getDeclaringClass())) {
                 try {
@@ -46,6 +47,11 @@ class DefaultCallerSupplier implements Supplier<Method> {
     private static boolean isLambdaMethod(final StackWalker.StackFrame stackFrame) {
         return stackFrame != null && stackFrame.getMethodName() != null &&
                 stackFrame.getMethodName().contains(LAMBDA_KEYWORD);
+    }
+
+    private static boolean isAnonymousCaller(final StackWalker.StackFrame stackFrame) {
+        return stackFrame != null && stackFrame.getDeclaringClass() != null &&
+                stackFrame.getDeclaringClass().isAnonymousClass();
     }
 
     private static Method getMethodFromStackFrame(final StackWalker.StackFrame stackFrame) throws NoSuchMethodException {
