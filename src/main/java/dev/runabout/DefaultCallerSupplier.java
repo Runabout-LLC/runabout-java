@@ -29,7 +29,7 @@ class DefaultCallerSupplier implements Supplier<Method> {
         final AtomicReference<Method> method = new AtomicReference<>();
 
         StackWalker.getInstance(options).forEach(stackFrame -> {
-            if (method.get() == null && !failed.get() &&
+            if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
                     stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
                     !callerClassBlackList.contains(stackFrame.getDeclaringClass())) {
                 try {
