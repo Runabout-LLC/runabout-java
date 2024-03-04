@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1 - 2024-03-04
+### Fixed
+- Fixed bug in default CallerSupplier implementation that was picking methods from anonymous classes.
+
 ## 1.1.0 - 2024-02-28
 ### Added
 - Added a setter to the RunaboutServiceBuilder to provide custom Method toString implementations.
