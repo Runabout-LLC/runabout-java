@@ -1,6 +1,7 @@
 package dev.runabout;
 
 import dev.runabout.fixtures.CallerClass;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -14,7 +15,10 @@ public class DefaultCallerSupplierTests {
         final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(Set.of());
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callLambda(callerSupplier, method);
-        System.out.println(method.get());
+        Assertions.assertNotNull(method.get());
+        final String signature = method.get().toString();
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callLambda(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+                signature);
     }
 
     @Test
@@ -22,6 +26,9 @@ public class DefaultCallerSupplierTests {
         final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(Set.of());
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callAnonymous(callerSupplier, method);
-        System.out.println(method.get());
+        Assertions.assertNotNull(method.get());
+        final String signature = method.get().toString();
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callAnonymous(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+                signature);
     }
 }
