@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -23,6 +24,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Consumer<Throwable> throwableConsumer;
     private Supplier<String> datetimeSupplier;
     private Function<Method, String> methodToStringFunction;
+    private Predicate<StackWalker.StackFrame> stackFramePredicate;
 
     private final Supplier<T> jsonFactory;
 
@@ -142,19 +144,48 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     }
 
     /**
+     * Sets the stack frame predicate for the RunaboutService.
+     * The predicate is used to filter out stack frames when determining the caller in {@link DefaultCallerSupplier}.
+     * This method is mutually exclusive with {@link #setCallerClassBlacklist(Set)} and
+     * {@link #setCallerSupplier(Supplier)}. If a caller black list is set, the predicate will just test if the
+     * declared class of the stack frame is not in the blacklist.
+     *
+     * @param stackFramePredicate The stack frame predicate.
+     * @return The RunaboutServiceBuilder.
+     */
+    public RunaboutServiceBuilder<T> setStackFramePredicate(Predicate<StackWalker.StackFrame> stackFramePredicate) {
+        this.stackFramePredicate = Objects.requireNonNull(stackFramePredicate, "Predicate cannot be null.");
+        return this;
+    }
+
+    /**
      * Builds the RunaboutService.
      *
      * @return The RunaboutService.
      */
     public RunaboutService<T> build() {
 
-        if (callerSupplier != null && callerClassBlacklist != null) {
-            throw new RunaboutException("Caller supplier and caller class blacklist setters are mutually exclusive.");
+        if (callerClassBlacklist != null && stackFramePredicate != null) {
+            throw new RunaboutException("Caller class blacklist and stack frame predicate setters " +
+                    "are mutually exclusive.");
         }
 
-        final Set<Class<?>> callerClassBlacklistFinal = Optional.ofNullable(callerClassBlacklist).orElseGet(Set::of);
+        final Predicate<StackWalker.StackFrame> defaultCallerSupplierPredicate = Optional.ofNullable(stackFramePredicate)
+                .orElseGet(() -> Optional.ofNullable(callerClassBlacklist)
+                        .map(DefaultCallerSupplier::getCallerClassPredicate)
+                        .orElse(null));
+
+        if (callerSupplier != null && defaultCallerSupplierPredicate != null) {
+            throw new RunaboutException("Caller supplier and caller predicate/blacklist " +
+                    "setters are mutually exclusive.");
+        }
+
         final Supplier<Method> callerSupplierFinal = Optional.ofNullable(callerSupplier)
-                .orElseGet(() -> new DefaultCallerSupplier(callerClassBlacklistFinal));
+                .orElseGet(() -> {
+                    final Predicate<StackWalker.StackFrame> predicateFinal = Optional
+                            .ofNullable(defaultCallerSupplierPredicate).orElse(stackFrame -> true);
+                    return new DefaultCallerSupplier(predicateFinal);
+                });
 
         final RunaboutSerializer customSerializerFinal = Optional.ofNullable(this.customSerializer)
                 .orElseGet(RunaboutSerializer::getSerializer);

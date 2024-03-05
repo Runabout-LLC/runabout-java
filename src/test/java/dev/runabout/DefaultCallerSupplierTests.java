@@ -5,14 +5,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DefaultCallerSupplierTests {
 
     @Test
     void testIgnoreLambdaMethod() {
-        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(Set.of());
+        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(s -> true);
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callLambda(callerSupplier, method);
         Assertions.assertNotNull(method.get());
@@ -23,7 +22,7 @@ public class DefaultCallerSupplierTests {
 
     @Test
     void testIgnoreAnonymousClass() {
-        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(Set.of());
+        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(s -> true);
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callAnonymous(callerSupplier, method);
         Assertions.assertNotNull(method.get());

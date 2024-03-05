@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 class DefaultCallerSupplier implements Supplier<Method> {
@@ -16,10 +17,10 @@ class DefaultCallerSupplier implements Supplier<Method> {
     );
     private static final String LAMBDA_KEYWORD = "lambda$";
 
-    private final Set<Class<?>> callerClassBlackList;
+    private final Predicate<StackWalker.StackFrame> stackFramePredicate;
 
-    DefaultCallerSupplier(Set<Class<?>> callerClassBlackList) {
-        this.callerClassBlackList = callerClassBlackList;
+    DefaultCallerSupplier(final Predicate<StackWalker.StackFrame> stackFramePredicate) {
+        this.stackFramePredicate = stackFramePredicate;
     }
 
     @Override
@@ -32,7 +33,7 @@ class DefaultCallerSupplier implements Supplier<Method> {
             if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
                     !isAnonymousCaller(stackFrame) &&
                     stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
-                    !callerClassBlackList.contains(stackFrame.getDeclaringClass())) {
+                    stackFramePredicate.test(stackFrame)) {
                 try {
                     method.set(getMethodFromStackFrame(stackFrame));
                 } catch (NoSuchMethodException | SecurityException | NullPointerException e) {
@@ -42,6 +43,11 @@ class DefaultCallerSupplier implements Supplier<Method> {
         });
 
         return method.get();
+    }
+
+    public static Predicate<StackWalker.StackFrame> getCallerClassPredicate(final Set<Class<?>> callerClassBlackList) {
+        return stackFrame -> stackFrame != null && stackFrame.getDeclaringClass() != null &&
+                !callerClassBlackList.contains(stackFrame.getDeclaringClass());
     }
 
     private static boolean isLambdaMethod(final StackWalker.StackFrame stackFrame) {
