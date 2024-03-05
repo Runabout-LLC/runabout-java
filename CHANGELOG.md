@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 - 2024-03-04
+### Added
+- Added a setter to the RunaboutServiceBuilder to provide a custom predicate to test StackFrames in the default CallerSupplier implementation.
+
 ## 1.1.1 - 2024-03-04
 ### Fixed
 - Fixed bug in default CallerSupplier implementation that was picking methods from anonymous classes.
