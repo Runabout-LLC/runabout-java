@@ -141,4 +141,30 @@ public class RunaboutServiceImplTests {
         Assertions.assertEquals(1, thrown.size());
         Assertions.assertEquals(ThrowsClass2.EXCEPTION_MESSAGE, thrown.get(0).getMessage());
     }
+
+    @Test
+    void testNullInput() {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final Logic1 logic1 = new Logic1(outputStream, Map.of("george", "washington", "john", "adams"));
+        final ConcreteClass2 concreteClass2 = new ConcreteClass2(1, Map.of("a", "b", "c", "d"));
+
+        Assertions.assertThrows(NullPointerException.class, () -> logic1.concatValuesLayerLogger(null, concreteClass2));
+
+        final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
+        final Document document = Document.parse(loggerOutput);
+
+        final String method = document.getString("method");
+        Assertions.assertTrue(method.contains("dev.runabout.fixtures.Logic1#concatValuesLayerLogger(dev.runabout.fixtures.ConcreteClass1, dev.runabout.fixtures.ConcreteClass2)"));
+
+        final List<Document> inputs = document.getList("inputs", Document.class);
+        Assertions.assertEquals(3, inputs.size());
+        assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
+
+        final Document input1 = inputs.get(1);
+        Assertions.assertEquals("null", input1.getString("eval"));
+        Assertions.assertEquals("null", input1.getString("type"));
+        Assertions.assertEquals(0, input1.getList("dependencies", String.class).size());
+
+        assertJsonString(inputs.get(2), ConcreteClass2.class, "new ConcreteClass2(", Set.of(ConcreteClass2.class, HashMap.class));
+    }
 }
