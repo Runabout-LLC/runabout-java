@@ -85,7 +85,8 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         for (final Object object: objects) {
             final RunaboutInput input = serialize(object);
             final T inputJson = jsonFactory.get();
-            inputJson.put(RunaboutConstants.TYPE_KEY, object.getClass().getCanonicalName());
+            final String type = getTypeSafe(object);
+            inputJson.put(RunaboutConstants.TYPE_KEY, type);
             inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
             inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
             inputs.add(inputJson);
@@ -163,5 +164,9 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     private static boolean validInput(final RunaboutInput input) {
         return input != null && input.getEval() != null && !input.getEval().isEmpty() &&
                 input.getDependencies() != null;
+    }
+
+    private static String getTypeSafe(final Object object) {
+        return object == null ? "null" : object.getClass().getCanonicalName();
     }
 }
