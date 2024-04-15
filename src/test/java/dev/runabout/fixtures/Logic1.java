@@ -5,6 +5,7 @@ import dev.runabout.RunaboutServiceBuilder;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class Logic1 {
 
@@ -26,6 +27,11 @@ public class Logic1 {
                 .setCallerClassBlacklist(Set.of(Logger.class))
                 .build().toRunaboutString(this, cc1, cc2));
         return concatValues(cc1, cc2);
+    }
+
+    public String evaluateSupplierWrapper(SupplierWrapper supplier) {
+        logger.runaboutInfo(this, supplier);
+        return supplier.get() + " " + supplier.getOther();
     }
 
     private String concatValues(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {

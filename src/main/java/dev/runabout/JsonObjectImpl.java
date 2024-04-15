@@ -3,6 +3,7 @@ package dev.runabout;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Supplier;
@@ -78,7 +79,7 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
             ((List<?>) value).forEach(innerValue -> commaJoiner.add(valueToString(innerValue)));
             string = "[" + commaJoiner + "]";
         } else {
-            string = value.toString();
+            string = Optional.ofNullable(value).map(Object::toString).orElse("null");
         }
 
         return string;
