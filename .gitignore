@@ -6,6 +6,9 @@ build/
 
 ### IntelliJ IDEA ###
 .idea/
+!.idea/gradle.xml
+!.idea/misc.xml
+!.idea/vcs.xml
 *.iws
 *.iml
 *.ipr
