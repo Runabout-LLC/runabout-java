@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class RunaboutServiceImplTests {
 
@@ -169,13 +168,6 @@ public class RunaboutServiceImplTests {
         Assertions.assertEquals(0, input1.getList("dependencies", String.class).size());
 
         assertJsonString(inputs.get(2), ConcreteClass2.class, "new ConcreteClass2(", Set.of(ConcreteClass2.class, HashMap.class));
-    }
-
-    interface YOLO extends Supplier<String> {
-        @Override
-        String get();
-
-        void print();
     }
 
     @Test
