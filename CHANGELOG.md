@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2 - 2024-04-15
+### Added
+- Added support for anonymous classes as Runabout inputs. Anonymous classes will be cast to the interface/class they implement or extend.
+
+### Fixed
+- Fixed an NPE in the default JsonObject implementation.
+
 ## 1.2.1 - 2024-03-19
 ### Fixed
 - Fixed a bug in the creation of the Runabout JSON with a null parameter. Now both type and eval for a null parameter will be "null".

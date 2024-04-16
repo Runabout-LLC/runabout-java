@@ -167,6 +167,16 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     private static String getTypeSafe(final Object object) {
-        return object == null ? "null" : object.getClass().getCanonicalName();
+        return Optional.ofNullable(object)
+                .map(Object::getClass)
+                .map(clazz -> clazz.isAnonymousClass() ? getAnonymousImplClass(clazz) : clazz.getCanonicalName())
+                .orElse("null");
+    }
+
+    private static String getAnonymousImplClass(final Class<?> clazz) {
+        return Optional.ofNullable(clazz)
+                .map(c -> c.getInterfaces().length > 0 ? c.getInterfaces()[0] : c.getSuperclass())
+                .map(Class::getCanonicalName)
+                .orElse("null");
     }
 }
