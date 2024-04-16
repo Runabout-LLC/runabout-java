@@ -4,9 +4,11 @@ import dev.runabout.JsonObject;
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
+import dev.runabout.ToRunabout;
 import dev.runabout.fixtures.ConcreteClass1;
 import dev.runabout.fixtures.ConcreteClass2;
 import dev.runabout.fixtures.Logic1;
+import dev.runabout.fixtures.SupplierWrapper;
 import dev.runabout.fixtures.ThrowsClass1;
 import dev.runabout.fixtures.ThrowsClass2;
 import dev.runabout.fixtures.UnknownClass1;
@@ -166,5 +168,40 @@ public class RunaboutServiceImplTests {
         Assertions.assertEquals(0, input1.getList("dependencies", String.class).size());
 
         assertJsonString(inputs.get(2), ConcreteClass2.class, "new ConcreteClass2(", Set.of(ConcreteClass2.class, HashMap.class));
+    }
+
+    @Test
+    void testAnonymousInput() {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final Logic1 logic1 = new Logic1(outputStream, Map.of("george", "washington", "john", "adams"));
+        final SupplierWrapper supplier = new SupplierWrapper() {
+            @Override
+            public String get() {
+                return "anonymous";
+            }
+
+            @Override
+            public String getOther() {
+                return "other";
+            }
+
+            @ToRunabout
+            RunaboutInput runaboutInput() {
+                return RunaboutInput.of(
+                        "new SupplierWrapper() { @Override public String get() { return \"anonymous\"; } @Override public String getOther() { return \"other\"; }} ",
+                        Set.of(SupplierWrapper.class.getCanonicalName()));
+            }
+        };
+
+        final String output = logic1.evaluateSupplierWrapper(supplier);
+        Assertions.assertEquals("anonymous other", output);
+
+        final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
+        final Document document = Document.parse(loggerOutput);
+
+        final List<Document> inputs = document.getList("inputs", Document.class);
+        Assertions.assertEquals(2, inputs.size());
+        assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
+        assertJsonString(inputs.get(1), SupplierWrapper.class, "new SupplierWrapper() {", Set.of(SupplierWrapper.class));
     }
 }

@@ -120,7 +120,7 @@ class DefaultSerializer {
             // If either key/value cannot be serialized, return empty input.
             if (serialKey == null || serialKey.getEval() == null || serialKey.getEval().isEmpty() ||
                     serialValue == null || serialValue.getEval() == null || serialValue.getEval().isEmpty()) {
-                return RunaboutInput.of("", Collections.emptySet());
+                return EMPTY_INPUT;
             }
             final String entryString = "put(" + serialKey.getEval() + ", " + serialValue.getEval() + "); ";
             builder.append(entryString);
