@@ -170,10 +170,18 @@ public class RunaboutServiceImplTests {
         assertJsonString(inputs.get(2), ConcreteClass2.class, "new ConcreteClass2(", Set.of(ConcreteClass2.class, HashMap.class));
     }
 
+    //
+    // Tests anonymous implementations of both classes and interfaces.
+    //
     @Test
     void testAnonymousInput() {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        final Logic1 logic1 = new Logic1(outputStream, Map.of("george", "washington", "john", "adams"));
+        final Logic1 logic = new Logic1(outputStream, Map.of("george", "washington", "john", "adams")) {
+            @Override
+            public String evaluateSupplierWrapper(SupplierWrapper supplier) {
+                return super.evaluateSupplierWrapper(supplier) + " overridden";
+            }
+        };
         final SupplierWrapper supplier = new SupplierWrapper() {
             @Override
             public String get() {
@@ -193,8 +201,8 @@ public class RunaboutServiceImplTests {
             }
         };
 
-        final String output = logic1.evaluateSupplierWrapper(supplier);
-        Assertions.assertEquals("anonymous other", output);
+        final String output = logic.evaluateSupplierWrapper(supplier);
+        Assertions.assertEquals("anonymous other overridden", output);
 
         final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
         final Document document = Document.parse(loggerOutput);
