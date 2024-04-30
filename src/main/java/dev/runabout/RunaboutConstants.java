@@ -16,4 +16,5 @@ class RunaboutConstants {
     public static final String EVENT_ID_KEY = "event_id";
     public static final String PROPERTIES_KEY = "properties";
     public static final String SCENARIO_KEY = "scenario";
+    public static final String INGEST_URL = "https://api.runabout.dev/ingest";
 }
