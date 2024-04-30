@@ -22,12 +22,14 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     private final Supplier<T> jsonFactory;
     private final Supplier<String> datetimeSupplier;
     private final Function<Method, String> methodToStringFunction;
+    private final RunaboutEmitter emitter;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
     RunaboutServiceImpl(boolean excludeSuper, Consumer<Throwable> throwableConsumer, Supplier<Method> callerSupplier,
                         RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
-                        Supplier<String> datetimeSupplier, Function<Method, String> methodToStringFunction) {
+                        Supplier<String> datetimeSupplier, Function<Method, String> methodToStringFunction,
+                        RunaboutEmitter emitter) {
         this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
         this.callerSupplier = callerSupplier;
@@ -35,6 +37,17 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         this.jsonFactory = jsonFactory;
         this.datetimeSupplier = datetimeSupplier;
         this.methodToStringFunction = methodToStringFunction;
+        this.emitter = emitter;
+    }
+
+    @Override
+    public void emit(String eventId, T properties, T scenario) {
+        final T json = jsonFactory.get();
+        json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
+        json.put(RunaboutConstants.PROPERTIES_KEY, properties);
+        json.put(RunaboutConstants.SCENARIO_KEY, scenario);
+        final String content = json.toJson();
+        emitter.queueEmission(content);
     }
 
     @Override

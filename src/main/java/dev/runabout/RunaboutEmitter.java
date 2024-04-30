@@ -13,21 +13,25 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 class RunaboutEmitter {
 
-    private static final BlockingQueue<String> eventQueue = new LinkedBlockingQueue<>();
+    private final int             readTimeout;
+    private final int             connectTimeout;
+    private final int             maxBodyLength;
+    private final String          ingestURL;
     private final ExecutorService executorService;
 
-    private final String ingestURL;
-    private final int readTimeout;
-    private final int connectTimeout;
+    private final BlockingQueue<String> eventQueue = new LinkedBlockingQueue<>();
 
-    private final int maxBodyLength;
+    RunaboutEmitter(final RunaboutEmitterBuilder builder) {
+        this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
+                builder.getIngestURL());
+    }
 
-    RunaboutEmitter(String ingestURL, int readTimeout, int connectTimeout, int maxBodyLength) {
+    RunaboutEmitter(int readTimeout, int connectTimeout, int maxBodyLength, int threadCount, String ingestURL) {
         this.ingestURL = ingestURL;
         this.readTimeout = readTimeout;
         this.connectTimeout = connectTimeout;
         this.maxBodyLength = maxBodyLength;
-        executorService = Executors.newFixedThreadPool(1);
+        executorService = Executors.newFixedThreadPool(threadCount);
     }
 
     public void queueEmission(final String contents) {
@@ -40,7 +44,7 @@ class RunaboutEmitter {
      *
      * @param contents String json contents.
      */
-    public void emit(final String contents) throws IOException {
+    void emit(final String contents) throws IOException {
 
         final URL endpoint = new URL(ingestURL);
         final URLConnection conn = endpoint.openConnection();

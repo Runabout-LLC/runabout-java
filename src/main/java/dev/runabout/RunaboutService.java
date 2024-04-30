@@ -23,6 +23,30 @@ public interface RunaboutService<T extends JsonObject> {
     }
 
     /**
+     * Emit a scenario with eventId and contextual data to the runabout ingest API.
+     * This method is intended to be non-blocking and implementations should enqueue the data
+     * to be sent on another thread.
+     *
+     * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
+     * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
+     * @param scenario   NonNull JsonObject scenario.
+     */
+    void emit(final String eventId, final T properties, final T scenario);
+
+    /**
+     * Create a scenario from an array of Objects and emit it.
+     * See {@link RunaboutService#emit(String, JsonObject, JsonObject)} for more info.
+     *
+     * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
+     * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
+     * @param objects    NonNull array (...) of Objects which may include "this" and method parameters.
+     */
+    default void emitObjects(final String eventId, final T properties, final Object... objects) {
+        final T scenario = toRunaboutJson(objects);
+        emit(eventId, properties, scenario);
+    }
+
+    /**
      * Converts an object to a RunaboutInput.
      *
      * @param object The object to serialize.
