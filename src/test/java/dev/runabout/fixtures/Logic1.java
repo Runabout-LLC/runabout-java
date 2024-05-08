@@ -5,7 +5,6 @@ import dev.runabout.RunaboutServiceBuilder;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class Logic1 {
 
@@ -23,9 +22,9 @@ public class Logic1 {
     }
 
     public String concatValuesLambdaLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
-        logger.info(() -> RunaboutServiceBuilder.getDefaultBuilder()
+        logger.info(() -> RunaboutServiceBuilder.getDefaultBuilder("test")
                 .setCallerClassBlacklist(Set.of(Logger.class))
-                .build().toRunaboutString(this, cc1, cc2));
+                .build().toScenario(this, cc1, cc2).toJson());
         return concatValues(cc1, cc2);
     }
 

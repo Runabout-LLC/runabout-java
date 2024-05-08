@@ -31,7 +31,7 @@ public abstract class AbstractClass1 {
 
     @ToRunabout
     private RunaboutInput toRunabout() {
-        final RunaboutService<?> runaboutService = RunaboutService.getService();
+        final RunaboutService<?> runaboutService = RunaboutService.getService("test");
         final RunaboutInput nameInput = runaboutService.serialize(name);
         final RunaboutInput keysInput = runaboutService.serialize(keys);
         final String className = this.getClass().getSimpleName();
