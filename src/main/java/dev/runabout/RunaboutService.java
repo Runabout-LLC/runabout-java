@@ -18,8 +18,8 @@ public interface RunaboutService<T extends JsonObject> {
      *
      * @return A default RunaboutService.
      */
-    static RunaboutService<JsonObject> getService() {
-        return RunaboutServiceBuilder.getDefaultBuilder().build();
+    static RunaboutService<JsonObject> getService(final String projectName) {
+        return RunaboutServiceBuilder.getDefaultBuilder(projectName).build();
     }
 
     /**
@@ -31,19 +31,19 @@ public interface RunaboutService<T extends JsonObject> {
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
      * @param scenario   NonNull JsonObject scenario.
      */
-    void emit(final String eventId, final T properties, final T scenario);
+    void emitScenario(final String eventId, final T properties, final T scenario);
 
     /**
      * Create a scenario from an array of Objects and emit it.
-     * See {@link RunaboutService#emit(String, JsonObject, JsonObject)} for more info.
+     * See {@link RunaboutService#emitScenario(String, JsonObject, JsonObject)} for more info.
      *
      * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
      * @param objects    NonNull array (...) of Objects which may include "this" and method parameters.
      */
-    default void emitObjects(final String eventId, final T properties, final Object... objects) {
-        final T scenario = toRunaboutJson(objects);
-        emit(eventId, properties, scenario);
+    default void emitScenario(final String eventId, final T properties, final Object... objects) {
+        final T scenario = toScenario(objects);
+        emitScenario(eventId, properties, scenario);
     }
 
     /**
@@ -63,13 +63,13 @@ public interface RunaboutService<T extends JsonObject> {
 
     /**
      * Converts a set of objects to a Runabout JSON object. Info about the caller method is implicitly determined.
-     * See {@link #toRunaboutJson(Method, Object...)} for more info.
+     * See {@link #toScenario(Method, Object...)} for more info.
      *
      * @param objects The objects to convert to Runabout inputs in JSON.
      * @return A JSON object.
      */
-    default T toRunaboutJson(final Object... objects) {
-        return toRunaboutJson(getCallerMethod(), objects);
+    default T toScenario(final Object... objects) {
+        return toScenario(getCallerMethod(), objects);
     }
 
     /**
@@ -96,25 +96,5 @@ public interface RunaboutService<T extends JsonObject> {
      * @param objects The objects to convert to Runabout inputs in JSON.
      * @return A JSON object.
      */
-    T toRunaboutJson(final Method method, final Object... objects);
-
-    /**
-     * Converts a set of objects to a Runabout JSON string. See {@link #toRunaboutJson(Object...)} for more info.
-     * @param objects The objects to convert to Runabout inputs in JSON.
-     * @return A JSON object as a String.
-     */
-    default String toRunaboutString(final Object... objects) {
-        return toRunaboutJson(objects).toJson();
-    }
-
-    /**
-     * Converts a Method and set of objects to a Runabout JSON string.
-     * See {@link #toRunaboutJson(Object...)} for more info.
-     * @param method The method that the objects are arguments for.
-     * @param objects The objects to convert to Runabout inputs in JSON.
-     * @return A JSON object as a String.
-     */
-    default String toRunaboutString(final Method method, final Object... objects) {
-        return toRunaboutJson(method, objects).toJson();
-    }
+    T toScenario(final Method method, final Object... objects);
 }

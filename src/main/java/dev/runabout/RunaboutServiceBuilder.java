@@ -27,15 +27,17 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Predicate<StackWalker.StackFrame> stackFramePredicate;
     private RunaboutEmitterBuilder emitterBuilder;
 
+    private final String projectName;
     private final Supplier<T> jsonFactory;
+
 
     /**
      * Gets the default RunaboutServiceBuilder instance which uses the built-in {@link JsonObject} type.
      *
      * @return The default RunaboutServiceBuilder.
      */
-    public static RunaboutServiceBuilder<JsonObject> getDefaultBuilder() {
-        return  new RunaboutServiceBuilder<>(new JsonObjectImpl.JsonFactoryImpl());
+    public static RunaboutServiceBuilder<JsonObject> getDefaultBuilder(String projectName) {
+        return  new RunaboutServiceBuilder<>(projectName, new JsonObjectImpl.JsonFactoryImpl());
     }
 
     /**
@@ -44,7 +46,8 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      *
      * @param jsonFactory The JSON object factory.
      */
-    public RunaboutServiceBuilder(Supplier<T> jsonFactory) {
+    public RunaboutServiceBuilder(String projectName, Supplier<T> jsonFactory) {
+        this.projectName = projectName;
         this.jsonFactory = jsonFactory;
     }
 
@@ -215,7 +218,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
                 .orElseGet(RunaboutEmitterBuilder::new);
         final RunaboutEmitter emitter = new RunaboutEmitter(emitterBuilderFinal);
 
-        return new RunaboutServiceImpl<>(excludeSuper, throwableConsumerFinal, callerSupplierFinal,
+        return new RunaboutServiceImpl<>(projectName, excludeSuper, throwableConsumerFinal, callerSupplierFinal,
                 customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal, emitter);
     }
 

@@ -13,7 +13,7 @@ public class Logger {
     private final PrintWriter printWriter;
 
     final RunaboutService<?> runaboutService = RunaboutServiceBuilder
-            .getDefaultBuilder()
+            .getDefaultBuilder("test")
             .setCallerClassBlacklist(Set.of(Logger.class))
             .build();
 
@@ -22,7 +22,7 @@ public class Logger {
     }
 
     public void runaboutInfo(final Object... objects) {
-        info(() -> runaboutService.toRunaboutString(objects));
+        info(() -> runaboutService.toScenario(objects).toJson());
     }
 
     public void info(final Supplier<String> supplier) {

@@ -43,7 +43,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public void emit(String eventId, T properties, T scenario) {
+    public void emitScenario(String eventId, T properties, T scenario) {
         final T json = jsonFactory.get();
         json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
         json.put(RunaboutConstants.PROJECT_NAME_KEY, projectName);
@@ -82,14 +82,14 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public T toRunaboutJson(Method method, Object... objects) {
+    public T toScenario(Method method, Object... objects) {
 
         Objects.requireNonNull(method, "RunaboutService unable to determine caller method.");
 
         final T json = jsonFactory.get();
 
         // Put version data in json.
-        json.put(RunaboutConstants.VERSION_KEY, RunaboutProperties.getInstance().getJsonContractVersion());
+        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
 
         // Put method data in json.
         json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
