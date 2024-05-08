@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 
 class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
+    private final String projectName;
     private final boolean excludeSuper;
     private final Consumer<Throwable> throwableConsumer;
     private final Supplier<Method> callerSupplier;
@@ -26,10 +27,11 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
-    RunaboutServiceImpl(boolean excludeSuper, Consumer<Throwable> throwableConsumer, Supplier<Method> callerSupplier,
-                        RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
+    RunaboutServiceImpl(String projectName, boolean excludeSuper, Consumer<Throwable> throwableConsumer,
+                        Supplier<Method> callerSupplier, RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
                         Supplier<String> datetimeSupplier, Function<Method, String> methodToStringFunction,
                         RunaboutEmitter emitter) {
+        this.projectName = projectName;
         this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
         this.callerSupplier = callerSupplier;
@@ -44,6 +46,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     public void emit(String eventId, T properties, T scenario) {
         final T json = jsonFactory.get();
         json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
+        json.put(RunaboutConstants.PROJECT_NAME_KEY, projectName);
         json.put(RunaboutConstants.PROPERTIES_KEY, properties);
         json.put(RunaboutConstants.SCENARIO_KEY, scenario);
         final String content = json.toJson();

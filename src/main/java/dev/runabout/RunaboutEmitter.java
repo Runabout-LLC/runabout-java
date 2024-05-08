@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -54,12 +53,8 @@ class RunaboutEmitter {
         conn.setDoOutput(false);
         conn.setRequestProperty("Content-Type", "application/json;charset=utf8");
 
-        final byte[] utf8data = contents.getBytes(StandardCharsets.UTF_8);
-        final String base64data = new String(Base64Coder.encode(utf8data));
-        final String encodedContents = URLEncoder.encode(base64data, StandardCharsets.UTF_8);
-
         try (OutputStream out = conn.getOutputStream()) {
-            out.write(encodedContents.getBytes());
+            out.write(contents.getBytes(StandardCharsets.UTF_8));
         }
     }
 
