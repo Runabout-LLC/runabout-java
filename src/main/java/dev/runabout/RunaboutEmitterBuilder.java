@@ -12,8 +12,8 @@ public class RunaboutEmitterBuilder {
      * Constructor sets default values.
      */
     public RunaboutEmitterBuilder() {
-        readTimeout = 100;
-        connectTimeout = 300;
+        readTimeout = 10000;
+        connectTimeout = 30000;
         maxBodyLength = 50_000;
         maxThreads = 1;
         ingestURL = RunaboutConstants.INGEST_URL;

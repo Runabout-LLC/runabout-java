@@ -2,9 +2,13 @@ package dev.runabout;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,13 +16,16 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 class RunaboutEmitter {
 
-    private final int             readTimeout;
-    private final int             connectTimeout;
-    private final int             maxBodyLength;
-    private final String          ingestURL;
+    private final int readTimeout;
+    private final int connectTimeout;
+    private final int maxBodyLength;
+    private final URI ingestURI;
+    private final int queueSize;
     private final ExecutorService executorService;
-
-    private final BlockingQueue<String> eventQueue = new LinkedBlockingQueue<>();
+    private final HttpClient httpClient;
+    private final HttpRequest.Builder requestBuilder;
+    private final Runnable failedToQueueCallback;
+    private final BlockingQueue<String> eventQueue;
 
     RunaboutEmitter(final RunaboutEmitterBuilder builder) {
         this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
@@ -26,15 +33,25 @@ class RunaboutEmitter {
     }
 
     RunaboutEmitter(int readTimeout, int connectTimeout, int maxBodyLength, int threadCount, String ingestURL) {
-        this.ingestURL = ingestURL;
+        this.ingestURI = toURI(ingestURL);
         this.readTimeout = readTimeout;
         this.connectTimeout = connectTimeout;
         this.maxBodyLength = maxBodyLength;
+        this.queueSize = 1000; // TODO
+        this.eventQueue = new LinkedBlockingQueue<>(queueSize);
         executorService = Executors.newFixedThreadPool(threadCount);
+        httpClient = HttpClient.newBuilder()
+                .build();
+        requestBuilder = HttpRequest.newBuilder()
+                .header("Content-Type", "application/json")
+                .uri(ingestURI);
+        failedToQueueCallback = () -> {};
     }
 
     public void queueEmission(final String contents) {
-        eventQueue.add(contents);
+        if (!eventQueue.offer(contents)) {
+            failedToQueueCallback.run();
+        }
         executorService.execute(new Worker());
     }
 
@@ -43,18 +60,16 @@ class RunaboutEmitter {
      *
      * @param contents String json contents.
      */
-    void emit(final String contents) throws IOException {
+    void emit(final String contents) {
+        final HttpRequest request = requestBuilder.POST(HttpRequest.BodyPublishers.ofString(contents)).build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding());
+    }
 
-        final URL endpoint = new URL(ingestURL);
-        final URLConnection conn = endpoint.openConnection();
-
-        conn.setReadTimeout(readTimeout);
-        conn.setConnectTimeout(connectTimeout);
-        conn.setDoOutput(false);
-        conn.setRequestProperty("Content-Type", "application/json;charset=utf8");
-
-        try (OutputStream out = conn.getOutputStream()) {
-            out.write(contents.getBytes(StandardCharsets.UTF_8));
+    private static URI toURI(final String url) {
+        try {
+            return new URL(url).toURI();
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new RunaboutException("Invalid runabout ingest URL", e);
         }
     }
 
@@ -75,8 +90,6 @@ class RunaboutEmitter {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-            } catch (Exception e) {
-                // Do nothing at this point? TODO
             }
         }
     }
