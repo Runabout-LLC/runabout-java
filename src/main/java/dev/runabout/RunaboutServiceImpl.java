@@ -48,7 +48,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         final T json = jsonFactory.get();
         json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
         json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get().toString());
-        json.put(RunaboutConstants.PROJECT_NAME_KEY, projectName);
+        json.put(RunaboutConstants.PROJECT_KEY, projectName);
         json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
         json.put(RunaboutConstants.PROPERTIES_KEY, properties);
         json.put(RunaboutConstants.SCENARIO_KEY, scenario);

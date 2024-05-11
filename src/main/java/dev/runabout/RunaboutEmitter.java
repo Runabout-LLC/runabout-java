@@ -1,7 +1,5 @@
 package dev.runabout;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,10 +9,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 class RunaboutEmitter {
 
@@ -40,7 +38,7 @@ class RunaboutEmitter {
         this.connectTimeout = connectTimeout;
         this.maxBodyLength = maxBodyLength;
         this.queueSize = 1000; // TODO
-        this.eventQueue = new LinkedBlockingQueue<>(queueSize);
+        this.eventQueue = new ArrayBlockingQueue<>(queueSize);
         executorService = Executors.newFixedThreadPool(threadCount);
         httpClient = HttpClient.newBuilder()
                 .build();

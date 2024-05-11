@@ -16,7 +16,7 @@ class RunaboutConstants {
     public static final String INSTANCES_KEY = "instances";
     public static final String DATETIME_KEY = "datetime";
     public static final String EVENT_ID_KEY = "event_id";
-    public static final String PROJECT_NAME_KEY = "project_name";
+    public static final String PROJECT_KEY = "project";
     public static final String PROPERTIES_KEY = "properties";
     public static final String SCENARIO_KEY = "scenario";
 
