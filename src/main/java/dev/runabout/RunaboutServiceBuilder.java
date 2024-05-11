@@ -1,7 +1,9 @@
 package dev.runabout;
 
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -22,7 +24,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
     private Consumer<Throwable> throwableConsumer;
-    private Supplier<String> datetimeSupplier;
+    private Supplier<Timestamp> datetimeSupplier;
     private Function<Method, String> methodToStringFunction;
     private Predicate<StackWalker.StackFrame> stackFramePredicate;
     private RunaboutEmitterBuilder emitterBuilder;
@@ -122,13 +124,13 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
 
     /**
      * Sets the datetime supplier for the RunaboutService.
-     * The supplier should return the current datetime UTC as an ISO-8601 formatted string.
-     * By default, the supplier will return the current datetime using {@link Instant#now()}.
+     * The supplier should return the current datetime UTC as a SQL Timestamp formatted datetime.
+     * By default, the supplier will return the current datetime wrapped in a {@link Timestamp}.
      *
      * @param datetimeSupplier The datetime supplier.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setDatetimeSupplier(Supplier<String> datetimeSupplier) {
+    public RunaboutServiceBuilder<T> setDatetimeSupplier(Supplier<Timestamp> datetimeSupplier) {
         this.datetimeSupplier = datetimeSupplier;
         return this;
     }
@@ -208,8 +210,8 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
                 .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
 
-        final Supplier<String> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
-                .orElseGet(() -> () -> Instant.now().toString());
+        final Supplier<Timestamp> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
+                .orElseGet(() -> () -> Timestamp.from(Instant.now()));
 
         final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
                 .orElse(RunaboutUtils::methodToRunaboutString);

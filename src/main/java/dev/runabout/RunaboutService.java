@@ -52,7 +52,7 @@ public interface RunaboutService<T extends JsonObject> {
      * @param object The object to serialize.
      * @return A RunaboutInput representing the serialized object.
      */
-    RunaboutInput serialize(final Object object);
+    RunaboutInstance serialize(final Object object);
 
     /**
      * Finds the closest caller method the stack that does not come from the Runabout library.
@@ -65,7 +65,7 @@ public interface RunaboutService<T extends JsonObject> {
      * Converts a set of objects to a Runabout JSON object. Info about the caller method is implicitly determined.
      * See {@link #toScenario(Method, Object...)} for more info.
      *
-     * @param objects The objects to convert to Runabout inputs in JSON.
+     * @param objects The objects to convert to Runabout instances in JSON.
      * @return A JSON object.
      */
     default T toScenario(final Object... objects) {
@@ -80,20 +80,20 @@ public interface RunaboutService<T extends JsonObject> {
      * {
      * <br>    "version": "0.0.0", // The version of the Runabout JSON format.
      * <br>    "caller": "com.example.ClassName.methodName", // The caller method, from which the objects are arguments.
-     * <br>     "inputs": [] // The runabout inputs (as JSON) from the objects passed in.
+     * <br>     "instances": [] // The runabout instances (as JSON) from the objects passed in.
      * <br>}
      * </code>
      * <br>
-     * The format of the inputs is as follows:
+     * The format of the instances is as follows:
      * <code>
      * {
-     * <br>    "type": "com.example.Value", // The fully qualified class of the input.
+     * <br>    "type": "com.example.Value", // The fully qualified class of the instance.
      * <br>    "value": "new Value()" // A String which is a Java expression, which evaluates to an object.
-     * <br>    "dependencies": [] // The fully qualified class names for all dependencies of the input.
+     * <br>    "dependencies": [] // The fully qualified class names for all dependencies of the instance.
      * <br>}
      * </code>
      * @param method The method that the objects are arguments for.
-     * @param objects The objects to convert to Runabout inputs in JSON.
+     * @param objects The objects to convert to Runabout instances in JSON.
      * @return A JSON object.
      */
     T toScenario(final Method method, final Object... objects);

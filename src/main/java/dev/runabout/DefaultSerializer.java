@@ -25,8 +25,8 @@ class DefaultSerializer {
             Map.entry(Character.class, (TypedSerializer<Character>) DefaultSerializer::charSerializer)
     );
 
-    private static final RunaboutInput NULL_INPUT = RunaboutInput.of("null", Collections.emptySet());
-    private static final RunaboutInput EMPTY_INPUT = RunaboutInput.of("", Collections.emptySet());
+    private static final RunaboutInstance NULL_INSTANCE = RunaboutInstance.of("null", Collections.emptySet());
+    private static final RunaboutInstance EMPTY_INSTANCE = RunaboutInstance.of("", Collections.emptySet());
 
     private static final DefaultSerializer INSTANCE = new DefaultSerializer();
 
@@ -41,73 +41,73 @@ class DefaultSerializer {
     /**
      * Main entrypoint for serializing objects.
      */
-    public <T> RunaboutInput toRunaboutGenericRecursive(final T object, final RunaboutSerializer recursiveSerializer) {
+    public <T> RunaboutInstance toRunaboutGenericRecursive(final T object, final RunaboutSerializer recursiveSerializer) {
 
         if (object == null) {
-            return NULL_INPUT;
+            return NULL_INSTANCE;
         }
 
-        RunaboutInput input = null;
+        RunaboutInstance instance = null;
 
         if (object instanceof Map<?,?>) {
-            input = mapSerializer((Map<?,?>) object, recursiveSerializer);
+            instance = mapSerializer((Map<?,?>) object, recursiveSerializer);
         } else if (object instanceof Collection<?>) {
-            input = collectionSerializer((Collection<?>) object, recursiveSerializer);
+            instance = collectionSerializer((Collection<?>) object, recursiveSerializer);
         }
 
-        return Optional.ofNullable(input).orElseGet(() -> toRunaboutGeneric(object));
+        return Optional.ofNullable(instance).orElseGet(() -> toRunaboutGeneric(object));
     }
 
     //
     // Suppress warnings for unchecked cast to TypedSerializer<T>. We know its safe based on composition of the map.
     //
     @SuppressWarnings("unchecked")
-    <T> RunaboutInput toRunaboutGeneric(final T object) {
+    <T> RunaboutInstance toRunaboutGeneric(final T object) {
 
         if (object == null) {
-            return NULL_INPUT;
+            return NULL_INSTANCE;
         }
 
-        RunaboutInput input = null;
+        RunaboutInstance instance = null;
 
         if (object instanceof Enum<?>) {
-            input = enumSerializer((Enum<?>) object);
+            instance = enumSerializer((Enum<?>) object);
         }
 
-        return Optional.ofNullable(input)
+        return Optional.ofNullable(instance)
                 .orElseGet(() -> Optional.ofNullable(serializers.get(object.getClass()))
                         .map(serializer -> ((TypedSerializer<T>) serializer).apply(object))
-                        .orElse(EMPTY_INPUT)
+                        .orElse(EMPTY_INSTANCE)
                 );
     }
 
-    static RunaboutInput getNullInput() {
-        return NULL_INPUT;
+    static RunaboutInstance getNullInput() {
+        return NULL_INSTANCE;
     }
 
-    static RunaboutInput getEmptyInput() {
-        return EMPTY_INPUT;
+    static RunaboutInstance getEmptyInput() {
+        return EMPTY_INSTANCE;
     }
 
-    private static RunaboutInput collectionSerializer(final Collection<?> collection,
-                                                      final RunaboutSerializer recursiveSerializer) {
+    private static RunaboutInstance collectionSerializer(final Collection<?> collection,
+                                                         final RunaboutSerializer recursiveSerializer) {
 
-        RunaboutInput input = null;
+        RunaboutInstance instance = null;
 
         if (collection instanceof List<?>) {
-            input = listSerializer((List<?>) collection, recursiveSerializer);
+            instance = listSerializer((List<?>) collection, recursiveSerializer);
         } else if (collection instanceof Set<?>) {
-            input = setSerializer((Set<?>) collection, recursiveSerializer);
+            instance = setSerializer((Set<?>) collection, recursiveSerializer);
         }
 
-        return input;
+        return instance;
     }
 
-    private static RunaboutInput mapSerializer(final Map<?,?> map, final RunaboutSerializer recursiveSerializer) {
+    private static RunaboutInstance mapSerializer(final Map<?,?> map, final RunaboutSerializer recursiveSerializer) {
 
         // Short circuit for empty map
         if (map.isEmpty()) {
-            return RunaboutInput.of("new HashMap<>()", Set.of(HashMap.class.getCanonicalName()));
+            return RunaboutInstance.of("new HashMap<>()", Set.of(HashMap.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
@@ -115,12 +115,12 @@ class DefaultSerializer {
         allDependencies.add(HashMap.class.getCanonicalName());
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            final RunaboutInput serialKey = recursiveSerializer.toRunaboutGeneric(entry.getKey());
-            final RunaboutInput serialValue = recursiveSerializer.toRunaboutGeneric(entry.getValue());
-            // If either key/value cannot be serialized, return empty input.
+            final RunaboutInstance serialKey = recursiveSerializer.toRunaboutGeneric(entry.getKey());
+            final RunaboutInstance serialValue = recursiveSerializer.toRunaboutGeneric(entry.getValue());
+            // If either key/value cannot be serialized, return empty instance.
             if (serialKey == null || serialKey.getEval() == null || serialKey.getEval().isEmpty() ||
                     serialValue == null || serialValue.getEval() == null || serialValue.getEval().isEmpty()) {
-                return EMPTY_INPUT;
+                return EMPTY_INSTANCE;
             }
             final String entryString = "put(" + serialKey.getEval() + ", " + serialValue.getEval() + "); ";
             builder.append(entryString);
@@ -128,13 +128,13 @@ class DefaultSerializer {
             allDependencies.addAll(serialValue.getDependencies());
         }
 
-        return RunaboutInput.of("new HashMap<>() {{ " + builder + "}}", allDependencies);
+        return RunaboutInstance.of("new HashMap<>() {{ " + builder + "}}", allDependencies);
     }
 
-    private static RunaboutInput listSerializer(final List<?> list, final RunaboutSerializer recursiveSerializer) {
+    private static RunaboutInstance listSerializer(final List<?> list, final RunaboutSerializer recursiveSerializer) {
 
         if (list.isEmpty()) {
-            return RunaboutInput.of("new ArrayList<>()", Set.of(ArrayList.class.getCanonicalName()));
+            return RunaboutInstance.of("new ArrayList<>()", Set.of(ArrayList.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
@@ -142,21 +142,21 @@ class DefaultSerializer {
         allDependencies.add(ArrayList.class.getCanonicalName());
 
         for (Object item : list) {
-            final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
+            final RunaboutInstance serialItem = recursiveSerializer.toRunaboutGeneric(item);
             if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                return EMPTY_INPUT;
+                return EMPTY_INSTANCE;
             }
             builder.append("add(").append(serialItem.getEval()).append("); ");
             allDependencies.addAll(serialItem.getDependencies());
         }
 
-        return RunaboutInput.of("new ArrayList<>() {{ " + builder + "}}", allDependencies);
+        return RunaboutInstance.of("new ArrayList<>() {{ " + builder + "}}", allDependencies);
     }
 
-    private static RunaboutInput setSerializer(final Set<?> set, final RunaboutSerializer recursiveSerializer) {
+    private static RunaboutInstance setSerializer(final Set<?> set, final RunaboutSerializer recursiveSerializer) {
 
         if (set.isEmpty()) {
-            return RunaboutInput.of("new HashSet<>()", Set.of(HashSet.class.getCanonicalName()));
+            return RunaboutInstance.of("new HashSet<>()", Set.of(HashSet.class.getCanonicalName()));
         }
 
         final StringBuilder builder = new StringBuilder();
@@ -164,35 +164,35 @@ class DefaultSerializer {
         allDependencies.add(HashSet.class.getCanonicalName());
 
         for (Object item : set) {
-            final RunaboutInput serialItem = recursiveSerializer.toRunaboutGeneric(item);
+            final RunaboutInstance serialItem = recursiveSerializer.toRunaboutGeneric(item);
             if (serialItem == null || serialItem.getEval() == null || serialItem.getEval().isEmpty()) {
-                return EMPTY_INPUT;
+                return EMPTY_INSTANCE;
             }
             builder.append("add(").append(serialItem.getEval()).append("); ");
             allDependencies.addAll(serialItem.getDependencies());
         }
 
-        return RunaboutInput.of("new HashSet<>() {{ " + builder + "}}", allDependencies);
+        return RunaboutInstance.of("new HashSet<>() {{ " + builder + "}}", allDependencies);
     }
 
-    private static RunaboutInput stringSerializer(final String string) {
-        return RunaboutInput.of("\"" + RunaboutUtils.escapeQuotesOneLayer(string) + "\"", Collections.emptySet());
+    private static RunaboutInstance stringSerializer(final String string) {
+        return RunaboutInstance.of("\"" + RunaboutUtils.escapeQuotesOneLayer(string) + "\"", Collections.emptySet());
     }
 
-    private static RunaboutInput primitiveSerializer(final Object object) {
+    private static RunaboutInstance primitiveSerializer(final Object object) {
         final String primitive = object instanceof Integer ? "int" : object.getClass().getSimpleName().toLowerCase();
-        return RunaboutInput.of("(" + primitive + ") " + object, Collections.emptySet());
+        return RunaboutInstance.of("(" + primitive + ") " + object, Collections.emptySet());
     }
 
-    static RunaboutInput charSerializer(final Object object) {
-        return RunaboutInput.of("'" + object + "'", Collections.emptySet());
+    static RunaboutInstance charSerializer(final Object object) {
+        return RunaboutInstance.of("'" + object + "'", Collections.emptySet());
     }
 
-    private static RunaboutInput enumSerializer(final Enum<?> e) {
-        return RunaboutInput.of(e.getClass().getCanonicalName() + "." + e.name(),
+    private static RunaboutInstance enumSerializer(final Enum<?> e) {
+        return RunaboutInstance.of(e.getClass().getCanonicalName() + "." + e.name(),
                 Set.of(e.getClass().getCanonicalName()));
     }
 
-    private interface TypedSerializer<T> extends Function<T, RunaboutInput> {
+    private interface TypedSerializer<T> extends Function<T, RunaboutInstance> {
     }
 }

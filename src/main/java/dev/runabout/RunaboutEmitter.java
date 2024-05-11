@@ -9,6 +9,8 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +27,7 @@ class RunaboutEmitter {
     private final HttpClient httpClient;
     private final HttpRequest.Builder requestBuilder;
     private final Runnable failedToQueueCallback;
-    private final BlockingQueue<String> eventQueue;
+    private final BlockingQueue<JsonObject> eventQueue;
 
     RunaboutEmitter(final RunaboutEmitterBuilder builder) {
         this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
@@ -48,7 +50,7 @@ class RunaboutEmitter {
         failedToQueueCallback = () -> {};
     }
 
-    public void queueEmission(final String contents) {
+    public void queueEmission(final JsonObject contents) {
         if (!eventQueue.offer(contents)) {
             failedToQueueCallback.run();
         }
@@ -78,15 +80,17 @@ class RunaboutEmitter {
         @Override
         public void run() {
             try {
-                final StringBuilder stringBuilder = new StringBuilder();
+                final JsonObject request = new JsonObjectImpl.JsonFactoryImpl().get(); // TODO parameterize
+                final List<JsonObject> events = new ArrayList<>();
 
-                while (!eventQueue.isEmpty() && stringBuilder.length() < maxBodyLength) {
-                    final String event = eventQueue.take();
-                    stringBuilder.append(event);
+                while (!eventQueue.isEmpty()) {
+                    events.add(eventQueue.take());
                 }
 
-                if (stringBuilder.length() > 0) {
-                    emit(stringBuilder.toString());
+                if (!events.isEmpty()) {
+                    request.put("scenarios", JsonObject.class, events);
+                    final String contents = request.toJson();
+                    emit(contents);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
