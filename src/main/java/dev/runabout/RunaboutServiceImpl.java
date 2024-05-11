@@ -45,6 +45,8 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     @Override
     public void emitScenario(String eventId, T properties, T scenario) {
         final T json = jsonFactory.get();
+        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
+        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get());
         json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
         json.put(RunaboutConstants.PROJECT_NAME_KEY, projectName);
         json.put(RunaboutConstants.PROPERTIES_KEY, properties);
@@ -88,14 +90,8 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         final T json = jsonFactory.get();
 
-        // Put version data in json.
-        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
-
         // Put method data in json.
         json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
-
-        // Put datetime data in json.
-        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get());
 
         final List<JsonObject> inputs = new ArrayList<>();
         for (final Object object: objects) {
