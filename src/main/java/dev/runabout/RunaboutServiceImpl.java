@@ -44,18 +44,6 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public void emitScenario(String eventId, T properties, T scenario) {
-        final T json = jsonFactory.get();
-        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
-        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get().toString());
-        json.put(RunaboutConstants.PROJECT_KEY, projectName);
-        json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
-        json.put(RunaboutConstants.PROPERTIES_KEY, properties);
-        json.put(RunaboutConstants.SCENARIO_KEY, scenario);
-        emitter.queueEmission(json);
-    }
-
-    @Override
     public RunaboutInstance serialize(Object object) {
 
         // Short circuit if object is null.
@@ -79,14 +67,18 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public T toScenario(Object... objects) {
+    public T toScenario(final String eventId, final T properties, final Object... objects) {
 
-        final Method method = callerSupplier.get();
-        Objects.requireNonNull(method, "RunaboutService unable to determine caller method.");
+        final Method method = Objects.requireNonNull(callerSupplier.get(),
+                "RunaboutService unable to determine caller method.");
 
         final T json = jsonFactory.get();
 
-        // Put method data in json.
+        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
+        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get().toString());
+        json.put(RunaboutConstants.PROJECT_KEY, projectName);
+        json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
+        json.put(RunaboutConstants.PROPERTIES_KEY, properties);
         json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
 
         final List<JsonObject> instances = new ArrayList<>();
@@ -102,6 +94,12 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
         json.put(RunaboutConstants.INSTANCES_KEY, JsonObject.class, instances);
         return json;
+    }
+
+    @Override
+    public void emitScenario(String eventId, T properties, final Object... objects) {
+        final T json = toScenario(eventId, properties, objects);
+        emitter.queueEmission(json);
     }
 
     private RunaboutInstance invokeInstanceSerializer(final Object object) {

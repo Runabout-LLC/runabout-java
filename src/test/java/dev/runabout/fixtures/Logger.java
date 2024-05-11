@@ -61,7 +61,7 @@ public class Logger {
 
     public void runaboutInfo(final Object... objects) {
         runaboutService.emitScenario(event, properties, objects);
-        info(() -> runaboutService.toScenario(objects).toJson());
+        info(() -> runaboutService.toScenario(null, null, objects).toJson());
     }
 
     public void info(final Supplier<String> supplier) {

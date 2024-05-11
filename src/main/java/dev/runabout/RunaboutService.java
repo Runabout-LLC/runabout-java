@@ -53,7 +53,7 @@ public interface RunaboutService<T extends JsonObject> {
      * @param objects The objects to convert to Runabout instances in JSON.
      * @return A JSON object.
      */
-    T toScenario(final Object... objects);
+    T toScenario(@Nullable final String eventId, @Nullable final T properties, final Object... objects);
 
     /**
      * Emit a scenario with eventId and contextual data to the runabout ingest API.
@@ -62,20 +62,7 @@ public interface RunaboutService<T extends JsonObject> {
      *
      * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
-     * @param scenario   NonNull JsonObject scenario.
+     * @param objects    Objects to convert to Runabout instances for the scenario.
      */
-    void emitScenario(final String eventId, final T properties, final T scenario);
-
-    /**
-     * Create a scenario from an array of Objects and emit it.
-     * See {@link RunaboutService#emitScenario(String, JsonObject, JsonObject)} for more info.
-     *
-     * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
-     * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
-     * @param objects    NonNull array (...) of Objects which may include "this" and method parameters.
-     */
-    default void emitScenario(final String eventId, final T properties, final Object... objects) {
-        final T scenario = toScenario(objects);
-        emitScenario(eventId, properties, scenario);
-    }
+     void emitScenario(final String eventId, final T properties, final Object... objects);
 }

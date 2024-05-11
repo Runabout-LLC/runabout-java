@@ -101,7 +101,7 @@ public class RunaboutServiceImplTests {
         Assertions.assertTrue(runaboutInstance.getDependencies().isEmpty());
 
         // Test full runabout json
-        final JsonObject jsonObject = runaboutService.toScenario(new Object());
+        final JsonObject jsonObject = runaboutService.toScenario(null, null, new Object());
 
         // Document for assertions
         final Document document = Document.parse(jsonObject.toJson());
@@ -119,7 +119,7 @@ public class RunaboutServiceImplTests {
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass1 throwsInstance = new ThrowsClass1("george", "washington");
-        final JsonObject jsonObject = runaboutService.toScenario(throwsInstance);
+        final JsonObject jsonObject = runaboutService.toScenario(null, null, throwsInstance);
         final Document document = Document.parse(jsonObject.toJson());
         final Document instance = document.getList("instances", Document.class).get(0);
         Assertions.assertEquals("", instance.getString("eval"));
@@ -135,7 +135,7 @@ public class RunaboutServiceImplTests {
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass2 throwsInstance = new ThrowsClass2("george", "washington");
-        final JsonObject jsonObject = runaboutService.toScenario(throwsInstance);
+        final JsonObject jsonObject = runaboutService.toScenario(null, null, throwsInstance);
         final Document document = Document.parse(jsonObject.toJson());
         final Document instance = document.getList("instances", Document.class).get(0);
         Assertions.assertEquals("", instance.getString("eval"));
