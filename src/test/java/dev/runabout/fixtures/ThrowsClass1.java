@@ -1,6 +1,6 @@
 package dev.runabout.fixtures;
 
-import dev.runabout.RunaboutInstance;
+import dev.runabout.RunaboutInput;
 import dev.runabout.ToRunabout;
 
 public class ThrowsClass1 {
@@ -16,7 +16,7 @@ public class ThrowsClass1 {
     }
 
     @ToRunabout
-    RunaboutInstance toRunaboutInput() {
+    RunaboutInput toRunaboutInput() {
         throw new RuntimeException(EXCEPTION_MESSAGE);
     }
 }

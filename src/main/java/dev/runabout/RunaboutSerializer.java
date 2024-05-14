@@ -25,5 +25,5 @@ public interface RunaboutSerializer {
      * @param object The object to serialize.
      * @return A RunaboutInput containing a valid Java statement that can be used to recreate the object.
      */
-    RunaboutInstance toRunaboutGeneric(final Object object);
+    RunaboutInput toRunaboutGeneric(final Object object);
 }

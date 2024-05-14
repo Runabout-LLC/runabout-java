@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 
 /**
- * Annotation for methods that convert instances of a class to a Runabout instance.
+ * Annotation for methods that convert instances of a class to a Runabout input.
  * The method must be:
  * - An instance method
  * - Take no parameters

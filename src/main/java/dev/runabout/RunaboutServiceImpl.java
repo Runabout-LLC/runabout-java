@@ -44,26 +44,26 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public RunaboutInstance serialize(Object object) {
+    public RunaboutInput serialize(Object object) {
 
         // Short circuit if object is null.
         if (object == null) {
             return DefaultSerializer.getNullInput();
         }
 
-        RunaboutInstance instance;
+        RunaboutInput input;
 
-        instance = invokeInstanceSerializer(object);
+        input = invokeInstanceSerializer(object);
 
-        if (instance == null) {
-            instance = invokeSafe(this.customSerializer, object);
+        if (input == null) {
+            input = invokeSafe(this.customSerializer, object);
         }
 
-        if (instance == null) {
-            instance = invokeSafe(o -> defaultSerializer.toRunaboutGenericRecursive(o, this::serialize), object);
+        if (input == null) {
+            input = invokeSafe(o -> defaultSerializer.toRunaboutGenericRecursive(o, this::serialize), object);
         }
 
-        return Optional.ofNullable(instance).orElseGet(DefaultSerializer::getEmptyInput);
+        return Optional.ofNullable(input).orElseGet(DefaultSerializer::getEmptyInput);
     }
 
     @Override
@@ -81,39 +81,33 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         json.put(RunaboutConstants.PROPERTIES_KEY, properties);
         json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
 
-        final List<JsonObject> instances = new ArrayList<>();
+        final List<JsonObject> inputs = new ArrayList<>();
         for (final Object object: objects) {
-            final RunaboutInstance instance = serialize(object);
-            final T instanceJson = jsonFactory.get();
+            final RunaboutInput input = serialize(object);
+            final T inputJson = jsonFactory.get();
             final String type = getTypeSafe(object);
-            instanceJson.put(RunaboutConstants.TYPE_KEY, type);
-            instanceJson.put(RunaboutConstants.EVAL_KEY, instance.getEval());
-            instanceJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(instance.getDependencies()));
-            instances.add(instanceJson);
+            inputJson.put(RunaboutConstants.TYPE_KEY, type);
+            inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
+            inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
+            inputs.add(inputJson);
         }
 
-        json.put(RunaboutConstants.INSTANCES_KEY, JsonObject.class, instances);
+        json.put(RunaboutConstants.INPUTS_KEY, JsonObject.class, inputs);
         return json;
     }
 
-    @Override
-    public void emitScenario(String eventId, T properties, final Object... objects) {
-        final T json = createScenario(eventId, properties, objects);
-        emitter.queueEmission(json);
-    }
-
-    private RunaboutInstance invokeInstanceSerializer(final Object object) {
-        RunaboutInstance instance;
+    private RunaboutInput invokeInstanceSerializer(final Object object) {
+        RunaboutInput input;
         Class<?> clazz = object.getClass();
-        instance = invokeInstanceSerializer(object, clazz);
-        while (!this.excludeSuper & instance == null && clazz.getSuperclass() != null) {
+        input = invokeInstanceSerializer(object, clazz);
+        while (!this.excludeSuper & input == null && clazz.getSuperclass() != null) {
             clazz = clazz.getSuperclass();
-            instance = invokeInstanceSerializer(object, clazz);
+            input = invokeInstanceSerializer(object, clazz);
         }
-        return instance;
+        return input;
     }
 
-    private RunaboutInstance invokeInstanceSerializer(final Object object, final Class<?> clazz) {
+    private RunaboutInput invokeInstanceSerializer(final Object object, final Class<?> clazz) {
 
         final Set<Method> methods = Optional.ofNullable(clazz).map(cls -> {
             final Set<Method> set = new HashSet<>(Set.of(cls.getMethods()));
@@ -128,15 +122,15 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
                 .orElse(null);
     }
 
-    private RunaboutInstance invokeSafe(final Method method, final Object object) {
-        RunaboutInstance instance = null;
+    private RunaboutInput invokeSafe(final Method method, final Object object) {
+        RunaboutInput input = null;
 
         try {
             method.setAccessible(true);
-            final RunaboutInstance tempInput = (RunaboutInstance) method.invoke(object);
+            final RunaboutInput tempInput = (RunaboutInput) method.invoke(object);
 
             if (validInput(tempInput)) {
-                instance = tempInput;
+                input = tempInput;
             }
 
         } catch (InvocationTargetException e) {
@@ -145,18 +139,18 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
             throwableConsumer.accept(t);
         }
 
-        return instance;
+        return input;
     }
 
-    private RunaboutInstance invokeSafe(final RunaboutSerializer serializer, final Object o) {
-        RunaboutInstance instance = null;
+    private RunaboutInput invokeSafe(final RunaboutSerializer serializer, final Object o) {
+        RunaboutInput input = null;
 
         if (serializer != null) {
             try {
-                final RunaboutInstance tempInput = serializer.toRunaboutGeneric(o);
+                final RunaboutInput tempInput = serializer.toRunaboutGeneric(o);
 
                 if (validInput(tempInput)) {
-                    instance = tempInput;
+                    input = tempInput;
                 }
 
             } catch (Throwable ex) {
@@ -164,12 +158,12 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
             }
         }
 
-        return instance;
+        return input;
     }
 
-    private static boolean validInput(final RunaboutInstance instance) {
-        return instance != null && instance.getEval() != null && !instance.getEval().isEmpty() &&
-                instance.getDependencies() != null;
+    private static boolean validInput(final RunaboutInput input) {
+        return input != null && input.getEval() != null && !input.getEval().isEmpty() &&
+                input.getDependencies() != null;
     }
 
     private static String getTypeSafe(final Object object) {

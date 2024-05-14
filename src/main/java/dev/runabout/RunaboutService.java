@@ -26,7 +26,7 @@ public interface RunaboutService<T extends JsonObject> {
      * @param object The object to serialize.
      * @return A RunaboutInput representing the serialized object.
      */
-    RunaboutInstance serialize(final Object object);
+    RunaboutInput serialize(final Object object);
 
     /**
      * Converts a method and the given objects to a Runabout JSON object.
@@ -48,7 +48,8 @@ public interface RunaboutService<T extends JsonObject> {
      * <br>    "dependencies": [] // The fully qualified class names for all dependencies of the instance.
      * <br>}
      * </code>
-     * @param objects The objects to convert to Runabout instances in JSON.
+     * @param method The method that the objects are arguments for.
+     * @param objects The objects to convert to Runabout inputs in JSON.
      * @return A JSON object.
      */
     T createScenario(@Nullable final String eventId, @Nullable final T properties, final Object... objects);

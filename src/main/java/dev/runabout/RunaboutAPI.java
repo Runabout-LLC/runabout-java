@@ -25,7 +25,7 @@ class RunaboutAPI {
     private final HttpClient httpClient;
     private final HttpRequest.Builder requestBuilder;
     private final Runnable failedToQueueCallback;
-    private final BlockingQueue<JsonObject> eventQueue;
+    private final BlockingQueue<String> eventQueue;
 
     RunaboutAPI(final RunaboutAPIBuilder builder) {
         this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
@@ -48,7 +48,7 @@ class RunaboutAPI {
         failedToQueueCallback = () -> {};
     }
 
-    public void queueEmission(final JsonObject contents) {
+    public void queueEmission(final String contents) {
         if (!eventQueue.offer(contents)) {
             failedToQueueCallback.run();
         }

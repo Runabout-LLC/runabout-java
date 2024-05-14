@@ -1,55 +1,19 @@
 package dev.runabout.fixtures;
 
-import dev.runabout.JsonObject;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Logger {
 
     private final PrintWriter printWriter;
 
-    private final String event = UUID.randomUUID().toString();
-    private final JsonObject properties = new JsonObject() {
-        @Override
-        public void put(String key, Boolean value) {
-
-        }
-
-        @Override
-        public void put(String key, Number value) {
-
-        }
-
-        @Override
-        public void put(String key, String value) {
-
-        }
-
-        @Override
-        public void put(String key, JsonObject value) {
-
-        }
-
-        @Override
-        public <T> void put(String key, Class<T> clazz, List<T> values) {
-
-        }
-
-        @Override
-        public String toJson() {
-            return "{ \"key\": \"value\" }";
-        }
-    };
-
-    final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder
-            .getDefaultBuilder("dada")
+    final RunaboutService<?> runaboutService = RunaboutServiceBuilder
+            .getDefaultBuilder("test")
             .setCallerClassBlacklist(Set.of(Logger.class))
             .build();
 

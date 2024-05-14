@@ -2,7 +2,7 @@
 
 ## 1.2.2 - 2024-04-15
 ### Added
-- Added support for anonymous classes as Runabout instances. Anonymous classes will be cast to the interface/class they implement or extend.
+- Added support for anonymous classes as Runabout inputs. Anonymous classes will be cast to the interface/class they implement or extend.
 
 ### Fixed
 - Fixed an NPE in the default JsonObject implementation.
