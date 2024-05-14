@@ -1,6 +1,7 @@
 package dev.runabout;
 
 import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,43 +13,43 @@ import java.util.function.Supplier;
 
 /**
  * A builder for creating a RunaboutService.
- *
- * @param <T> the type of Json Object to use.
  */
-public class RunaboutServiceBuilder<T extends JsonObject> {
+public class RunaboutServiceBuilder {
 
     private boolean excludeSuper = false;
     private Supplier<Method> callerSupplier;
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
     private Consumer<Throwable> throwableConsumer;
-    private Supplier<String> datetimeSupplier;
+    private Supplier<Timestamp> datetimeSupplier;
     private Function<Method, String> methodToStringFunction;
     private Predicate<StackWalker.StackFrame> stackFramePredicate;
     private RunaboutAPIBuilder emitterBuilder;
+    private Supplier<JsonObject> jsonFactory;
 
     private final String projectName;
-    private final Supplier<T> jsonFactory;
-
-
-    /**
-     * Gets the default RunaboutServiceBuilder instance which uses the built-in {@link JsonObject} type.
-     *
-     * @return The default RunaboutServiceBuilder.
-     */
-    public static RunaboutServiceBuilder<JsonObject> getDefaultBuilder(String projectName) {
-        return  new RunaboutServiceBuilder<>(projectName, new JsonObjectImpl.JsonFactoryImpl());
-    }
 
     /**
      * Creates a new RunaboutServiceBuilder with the given JSON object factory.
      * The supplier should create new instances of JSON objects.
      *
-     * @param jsonFactory The JSON object factory.
+     * @param projectName The name of the project to log scenario under.
      */
-    public RunaboutServiceBuilder(String projectName, Supplier<T> jsonFactory) {
+    public RunaboutServiceBuilder(String projectName) {
         this.projectName = projectName;
+    }
+
+    /**
+     * Sets the JSON object factory for the RunaboutService.
+     * The supplier should create new instances of JSON objects.
+     * By default, the service will use {@link JsonObjectImpl::new}.
+     *
+     * @param jsonFactory The JSON object factory.
+     * @return The RunaboutServiceBuilder.
+     */
+    public RunaboutServiceBuilder setJsonFactory(Supplier<JsonObject> jsonFactory) {
         this.jsonFactory = jsonFactory;
+        return this;
     }
 
     /**
@@ -59,7 +60,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param callerSupplier A supplier that returns the desired {@link Method} to include in the Runabout JSON.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setCallerSupplier(Supplier<Method> callerSupplier) {
+    public RunaboutServiceBuilder setCallerSupplier(Supplier<Method> callerSupplier) {
         this.callerSupplier = Objects.requireNonNull(callerSupplier, "Caller supplier cannot be null.");
         return this;
     }
@@ -74,7 +75,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param callerClassBlacklist The set of classes to blacklist from the stack trace.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setCallerClassBlacklist(Set<Class<?>> callerClassBlacklist) {
+    public RunaboutServiceBuilder setCallerClassBlacklist(Set<Class<?>> callerClassBlacklist) {
         this.callerClassBlacklist = Objects.requireNonNull(callerClassBlacklist,
                 "Caller class blacklist cannot be null.");
         return this;
@@ -90,7 +91,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param customSerializer The custom serializer to use.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setCustomSerializer(RunaboutSerializer customSerializer) {
+    public RunaboutServiceBuilder setCustomSerializer(RunaboutSerializer customSerializer) {
         this.customSerializer = Objects.requireNonNull(customSerializer, "Custom serializer cannot be null.");
         return this;
     }
@@ -102,7 +103,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param throwableConsumer a consumer
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setThrowableConsumer(Consumer<Throwable> throwableConsumer) {
+    public RunaboutServiceBuilder setThrowableConsumer(Consumer<Throwable> throwableConsumer) {
         this.throwableConsumer = Objects.requireNonNull(throwableConsumer, "Throwable consumer cannot be null.");
         return this;
     }
@@ -115,20 +116,20 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param excludeSuper Whether the service should exclude super classes.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setExcludeSuper(boolean excludeSuper) {
+    public RunaboutServiceBuilder setExcludeSuper(boolean excludeSuper) {
         this.excludeSuper = excludeSuper;
         return this;
     }
 
     /**
      * Sets the datetime supplier for the RunaboutService.
-     * The supplier should return the current datetime UTC as an ISO-8601 formatted string.
+     * The supplier should return the current datetime as an {@link Timestamp}.
      * By default, the supplier will return the current datetime using {@link Instant#now()}.
      *
      * @param datetimeSupplier The datetime supplier.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setDatetimeSupplier(Supplier<String> datetimeSupplier) {
+    public RunaboutServiceBuilder setDatetimeSupplier(Supplier<Timestamp> datetimeSupplier) {
         this.datetimeSupplier = datetimeSupplier;
         return this;
     }
@@ -142,7 +143,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param methodToStringFunction The methodToString function.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setMethodToStringFunction(Function<Method, String> methodToStringFunction) {
+    public RunaboutServiceBuilder setMethodToStringFunction(Function<Method, String> methodToStringFunction) {
         this.methodToStringFunction = methodToStringFunction;
         return this;
     }
@@ -157,7 +158,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param stackFramePredicate The stack frame predicate.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setStackFramePredicate(Predicate<StackWalker.StackFrame> stackFramePredicate) {
+    public RunaboutServiceBuilder setStackFramePredicate(Predicate<StackWalker.StackFrame> stackFramePredicate) {
         this.stackFramePredicate = Objects.requireNonNull(stackFramePredicate, "Predicate cannot be null.");
         return this;
     }
@@ -168,7 +169,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param emitterBuilder Runabout emitter builder with custom values set.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setEmitterBuilder(RunaboutAPIBuilder emitterBuilder) {
+    public RunaboutServiceBuilder setEmitterBuilder(RunaboutAPIBuilder emitterBuilder) {
         this.emitterBuilder = emitterBuilder;
         return this;
     }
@@ -178,7 +179,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      *
      * @return The RunaboutService.
      */
-    public RunaboutService<T> build() {
+    public RunaboutService build() {
 
         if (callerClassBlacklist != null && stackFramePredicate != null) {
             throw new RunaboutException("Caller class blacklist and stack frame predicate setters " +
@@ -208,8 +209,8 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
                 .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
 
-        final Supplier<String> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
-                .orElseGet(() -> () -> Instant.now().toString());
+        final Supplier<Timestamp> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
+                .orElseGet(() -> () -> Timestamp.from(Instant.now()));
 
         final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
                 .orElse(RunaboutUtils::methodToRunaboutString);
@@ -218,7 +219,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
                 .orElseGet(RunaboutAPIBuilder::new);
         final RunaboutAPI emitter = new RunaboutAPI(emitterBuilderFinal);
 
-        return new RunaboutServiceImpl<>(projectName, excludeSuper, throwableConsumerFinal, callerSupplierFinal,
+        return new RunaboutServiceImpl(projectName, excludeSuper, throwableConsumerFinal, callerSupplierFinal,
                 customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal, emitter);
     }
 

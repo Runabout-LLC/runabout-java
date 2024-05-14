@@ -43,7 +43,7 @@ public class RunaboutServiceImplTests {
         final String method = document.getString("method");
         Assertions.assertTrue(method.contains("dev.runabout.fixtures.Logic1#concatValuesLayerLogger(dev.runabout.fixtures.ConcreteClass1, dev.runabout.fixtures.ConcreteClass2)"));
 
-        final List<Document> inputs = document.getList("inputs", Document.class);
+        final List<Document> inputs = document.getList("instances", Document.class);
         Assertions.assertEquals(3, inputs.size());
         assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
         assertJsonString(inputs.get(1), ConcreteClass1.class, "new ConcreteClass1(", Set.of(ConcreteClass1.class, HashSet.class));
@@ -66,7 +66,7 @@ public class RunaboutServiceImplTests {
         final String method = document.getString("method");
         Assertions.assertTrue(method.contains("dev.runabout.fixtures.Logic1#concatValuesLambdaLogger(dev.runabout.fixtures.ConcreteClass1, dev.runabout.fixtures.ConcreteClass2)"));
 
-        final List<Document> inputs = document.getList("inputs", Document.class);
+        final List<Document> inputs = document.getList("instances", Document.class);
         Assertions.assertEquals(3, inputs.size());
         assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
         assertJsonString(inputs.get(1), ConcreteClass1.class, "new ConcreteClass1(", Set.of(ConcreteClass1.class, HashSet.class));
@@ -93,7 +93,7 @@ public class RunaboutServiceImplTests {
     void testNoSerializerFound() {
 
         final UnknownClass1 object = new UnknownClass1("field1", "field2");
-        final RunaboutService<JsonObject> runaboutService = RunaboutService.getService("test");
+        final RunaboutService runaboutService = RunaboutService.getService("test");
 
         // Test serialize method
         final RunaboutInput runaboutInput = runaboutService.serialize(object);
@@ -101,11 +101,11 @@ public class RunaboutServiceImplTests {
         Assertions.assertTrue(runaboutInput.getDependencies().isEmpty());
 
         // Test full runabout json
-        final JsonObject jsonObject = runaboutService.createScenario(null, null, new Object());
+        final JsonObject jsonObject = runaboutService.createScenario(null, null, new Object()).toJsonObject();
 
         // Document for assertions
         final Document document = Document.parse(jsonObject.toJson());
-        final List<Document> inputs = document.getList("inputs", Document.class);
+        final List<Document> inputs = document.getList("instances", Document.class);
         Assertions.assertEquals(1, inputs.size());
         final Document input = inputs.get(0);
         Assertions.assertEquals("", input.getString("eval"));
@@ -115,13 +115,13 @@ public class RunaboutServiceImplTests {
     @Test
     void testInstanceSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder.getDefaultBuilder("test")
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass1 throwsInstance = new ThrowsClass1("george", "washington");
-        final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance);
+        final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance).toJsonObject();
         final Document document = Document.parse(jsonObject.toJson());
-        final Document input = document.getList("inputs", Document.class).get(0);
+        final Document input = document.getList("instances", Document.class).get(0);
         Assertions.assertEquals("", input.getString("eval"));
         Assertions.assertTrue(input.get("dependencies", List.class).isEmpty());
         Assertions.assertEquals(1, thrown.size());
@@ -131,13 +131,13 @@ public class RunaboutServiceImplTests {
     @Test
     void testGenericSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder.getDefaultBuilder("test")
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass2 throwsInstance = new ThrowsClass2("george", "washington");
-        final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance);
+        final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance).toJsonObject();
         final Document document = Document.parse(jsonObject.toJson());
-        final Document input = document.getList("inputs", Document.class).get(0);
+        final Document input = document.getList("instances", Document.class).get(0);
         Assertions.assertEquals("", input.getString("eval"));
         Assertions.assertTrue(input.get("dependencies", List.class).isEmpty());
         Assertions.assertEquals(1, thrown.size());
@@ -158,7 +158,7 @@ public class RunaboutServiceImplTests {
         final String method = document.getString("method");
         Assertions.assertTrue(method.contains("dev.runabout.fixtures.Logic1#concatValuesLayerLogger(dev.runabout.fixtures.ConcreteClass1, dev.runabout.fixtures.ConcreteClass2)"));
 
-        final List<Document> inputs = document.getList("inputs", Document.class);
+        final List<Document> inputs = document.getList("instances", Document.class);
         Assertions.assertEquals(3, inputs.size());
         assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
 
@@ -207,7 +207,7 @@ public class RunaboutServiceImplTests {
         final String loggerOutput = outputStream.toString(StandardCharsets.UTF_8);
         final Document document = Document.parse(loggerOutput);
 
-        final List<Document> inputs = document.getList("inputs", Document.class);
+        final List<Document> inputs = document.getList("instances", Document.class);
         Assertions.assertEquals(2, inputs.size());
         assertJsonString(inputs.get(0), Logic1.class, "", Collections.emptySet());
         assertJsonString(inputs.get(1), SupplierWrapper.class, "new SupplierWrapper() {", Set.of(SupplierWrapper.class));

@@ -14,24 +14,25 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
+class RunaboutServiceImpl implements RunaboutService {
 
     private final String projectName;
     private final boolean excludeSuper;
     private final Consumer<Throwable> throwableConsumer;
     private final Supplier<Method> callerSupplier;
     private final RunaboutSerializer customSerializer;
-    private final Supplier<T> jsonFactory;
+    private final Supplier<JsonObject> jsonFactory;
     private final Supplier<Timestamp> datetimeSupplier;
     private final Function<Method, String> methodToStringFunction;
-    private final RunaboutAPI emitter;
+    private final RunaboutAPI api;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
     RunaboutServiceImpl(String projectName, boolean excludeSuper, Consumer<Throwable> throwableConsumer,
-                        Supplier<Method> callerSupplier, RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
+                        Supplier<Method> callerSupplier, RunaboutSerializer customSerializer,
+                        Supplier<JsonObject> jsonFactory,
                         Supplier<Timestamp> datetimeSupplier, Function<Method, String> methodToStringFunction,
-                        RunaboutAPI emitter) {
+                        RunaboutAPI api) {
         this.projectName = projectName;
         this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
@@ -40,7 +41,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
         this.jsonFactory = jsonFactory;
         this.datetimeSupplier = datetimeSupplier;
         this.methodToStringFunction = methodToStringFunction;
-        this.emitter = emitter;
+        this.api = api;
     }
 
     @Override
@@ -67,33 +68,29 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public T createScenario(final String eventId, final T properties, final Object... objects) {
+    public RunaboutScenario createScenario(final String eventId, final JsonObject properties, final Object... objects) {
+
+        final Timestamp datetime = datetimeSupplier.get();
 
         final Method method = Objects.requireNonNull(callerSupplier.get(),
                 "RunaboutService unable to determine caller method.");
+        final String method_reference = methodToStringFunction.apply(method);
 
-        final T json = jsonFactory.get();
-
-        json.put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION);
-        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get().toString());
-        json.put(RunaboutConstants.PROJECT_KEY, projectName);
-        json.put(RunaboutConstants.EVENT_ID_KEY, eventId);
-        json.put(RunaboutConstants.PROPERTIES_KEY, properties);
-        json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
-
-        final List<JsonObject> inputs = new ArrayList<>();
+        final List<RunaboutInstance> instances = new ArrayList<>();
         for (final Object object: objects) {
             final RunaboutInput input = serialize(object);
-            final T inputJson = jsonFactory.get();
             final String type = getTypeSafe(object);
-            inputJson.put(RunaboutConstants.TYPE_KEY, type);
-            inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
-            inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
-            inputs.add(inputJson);
+            final RunaboutInstance instance = RunaboutInstance.of(type, input);
+            instances.add(instance);
         }
 
-        json.put(RunaboutConstants.INPUTS_KEY, JsonObject.class, inputs);
-        return json;
+        return new RunaboutScenario(method_reference, eventId, projectName, datetime, properties, instances);
+    }
+
+    @Override
+    public void sendScenario(String eventId, JsonObject properties, Object... objects) {
+        final RunaboutScenario scenario = createScenario(eventId, properties, objects);
+        api.queueEmission(scenario.toJsonObject(jsonFactory));
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {

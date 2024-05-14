@@ -11,27 +11,31 @@ import java.util.function.Supplier;
 class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
 
     @Override
-    public void put(String key, Boolean value) {
+    public JsonObject put(String key, Boolean value) {
         super.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, Number value) {
+    public JsonObject put(String key, Number value) {
         super.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, String value) {
+    public JsonObject put(String key, String value) {
         super.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, JsonObject value) {
+    public JsonObject put(String key, JsonObject value) {
         super.put(key, value);
+        return this;
     }
 
     @Override
-    public <T> void put(String key, Class<T> clazz, List<T> values) {
+    public <T> JsonObject put(String key, Class<T> clazz, List<T> values) {
 
         if (clazz != String.class && clazz != Boolean.class &&
                 doesNotImplement(clazz, Number.class) &&
@@ -41,6 +45,7 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
         }
 
         super.put(key, values);
+        return this;
     }
 
     private boolean doesNotImplement(final Class<?> clazz, final Class<?> interfaceClass) {

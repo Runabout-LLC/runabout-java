@@ -12,8 +12,7 @@ public class Logger {
 
     private final PrintWriter printWriter;
 
-    final RunaboutService<?> runaboutService = RunaboutServiceBuilder
-            .getDefaultBuilder("test")
+    final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
             .setCallerClassBlacklist(Set.of(Logger.class))
             .build();
 
@@ -22,8 +21,8 @@ public class Logger {
     }
 
     public void runaboutInfo(final Object... objects) {
-        runaboutService.emitScenario(event, properties, objects);
-        info(() -> runaboutService.createScenario(null, null, objects).toJson());
+//        runaboutService.sendScenario(event, properties, objects);
+        info(() -> runaboutService.createScenario(null, null, objects).toJsonObject().toJson());
     }
 
     public void info(final Supplier<String> supplier) {

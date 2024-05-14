@@ -9,10 +9,9 @@ public class RunaboutServiceBuilderTests {
 
     @Test
     void testCallerBlacklistValidation() {
-        Assertions.assertThrows(RunaboutException.class, () -> RunaboutServiceBuilder.getDefaultBuilder("test")
+        Assertions.assertThrows(RunaboutException.class, () -> new RunaboutServiceBuilder("test")
                 .setCallerClassBlacklist(Set.of())
                 .setCallerSupplier(() -> null)
                 .build());
     }
-
 }

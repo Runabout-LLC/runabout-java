@@ -50,16 +50,21 @@ public final class RunaboutScenario {
         return instances;
     }
 
-    public JsonObject toJson(final Supplier<JsonObject> jsonFactory) {
+    public JsonObject toJsonObject() {
+        return toJsonObject(JsonObjectImpl::new);
+    }
+
+    public JsonObject toJsonObject(final Supplier<JsonObject> jsonFactory) {
         final List<JsonObject> jsonInstances = instances.stream()
-                .map(instance -> instance.toJson(jsonFactory))
+                .map(instance -> instance.toJsonObject(jsonFactory))
                 .collect(Collectors.toList());
         return jsonFactory.get()
+                .put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION)
                 .put(RunaboutConstants.EVENT_ID_KEY, eventId)
                 .put(RunaboutConstants.PROJECT_KEY, project)
                 .put(RunaboutConstants.DATETIME_KEY, datetime.toString())
                 .put(RunaboutConstants.PROPERTIES_KEY, properties)
                 .put(RunaboutConstants.METHOD_KEY, method)
-                .put(RunaboutConstants.INSTANCES_KEY, JsonObject.class, instances);
+                .put(RunaboutConstants.INSTANCES_KEY, JsonObject.class, jsonInstances);
     }
 }

@@ -6,18 +6,17 @@ package dev.runabout;
  * The service has a generic type parameter that allows for the user to specify the type of JSON object to be used.
  * By default, the service uses the built-in lightweight {@link JsonObject} interface. To use a different type, use
  * {@link RunaboutServiceBuilder} to create a custom service.
- *
- * @param <T> The type of JSON object to use.
  */
-public interface RunaboutService<T extends JsonObject> {
+public interface RunaboutService {
 
     /**
      * Gets the default RunaboutService which uses the built-in {@link JsonObject} type.
      *
-     * @return A default RunaboutService.
+     * @param projectName The name of the project to log scenarios under.
+     * @return The default implementation of RunaboutService.
      */
-    static RunaboutService<JsonObject> getService(final String projectName) {
-        return RunaboutServiceBuilder.getDefaultBuilder(projectName).build();
+    static RunaboutService getService(final String projectName) {
+        return new RunaboutServiceBuilder(projectName).build();
     }
 
     /**
@@ -36,7 +35,7 @@ public interface RunaboutService<T extends JsonObject> {
      * {
      * <br>    "version": "0.0.0", // The version of the Runabout JSON format.
      * <br>    "caller": "com.example.ClassName.methodName", // The caller method, from which the objects are arguments.
-     * <br>     "instances": [] // The runabout instances (as JSON) from the objects passed in.
+     * <br>    "instances": [] // The runabout instances (as JSON) from the objects passed in.
      * <br>}
      * </code>
      * <br>
@@ -48,11 +47,13 @@ public interface RunaboutService<T extends JsonObject> {
      * <br>    "dependencies": [] // The fully qualified class names for all dependencies of the instance.
      * <br>}
      * </code>
-     * @param method The method that the objects are arguments for.
-     * @param objects The objects to convert to Runabout inputs in JSON.
+     * @param eventId    Nullable String eventId for tracking scenarios that occurred in the same request.
+     * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
+     * @param objects    The objects to convert to Runabout inputs in JSON.
      * @return A JSON object.
      */
-    T createScenario(@Nullable final String eventId, @Nullable final T properties, final Object... objects);
+    RunaboutScenario createScenario(@Nullable final String eventId, @Nullable final JsonObject properties,
+                                    final Object... objects);
 
     /**
      * Emit a scenario with eventId and contextual data to the runabout ingest API.
@@ -63,5 +64,5 @@ public interface RunaboutService<T extends JsonObject> {
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
      * @param objects    Objects to convert to Runabout instances for the scenario.
      */
-     void emitScenario(final String eventId, final T properties, final Object... objects);
+     void sendScenario(final String eventId, final JsonObject properties, final Object... objects);
 }

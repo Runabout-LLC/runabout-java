@@ -25,7 +25,7 @@ class RunaboutAPI {
     private final HttpClient httpClient;
     private final HttpRequest.Builder requestBuilder;
     private final Runnable failedToQueueCallback;
-    private final BlockingQueue<String> eventQueue;
+    private final BlockingQueue<JsonObject> eventQueue;
 
     RunaboutAPI(final RunaboutAPIBuilder builder) {
         this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
@@ -48,8 +48,8 @@ class RunaboutAPI {
         failedToQueueCallback = () -> {};
     }
 
-    public void queueEmission(final String contents) {
-        if (!eventQueue.offer(contents)) {
+    public void queueEmission(final JsonObject object) {
+        if (!eventQueue.offer(object)) {
             failedToQueueCallback.run();
         }
         executorService.execute(new Worker());
@@ -60,7 +60,7 @@ class RunaboutAPI {
      *
      * @param contents String json contents.
      */
-    void emit(final String contents) {
+    private void emit(final String contents) {
         final HttpRequest request = requestBuilder
 
                 .POST(HttpRequest.BodyPublishers.ofString(contents)).build();
