@@ -1,7 +1,5 @@
 package dev.runabout;
 
-import java.lang.reflect.Method;
-
 /**
  * Runabout interface for converting runtime java objects to JSON outputs that can be
  * used for replay debugging in <a href="https://www.runabout.dev">Runabout</a>.
@@ -53,7 +51,7 @@ public interface RunaboutService<T extends JsonObject> {
      * @param objects The objects to convert to Runabout instances in JSON.
      * @return A JSON object.
      */
-    T toScenario(@Nullable final String eventId, @Nullable final T properties, final Object... objects);
+    T createScenario(@Nullable final String eventId, @Nullable final T properties, final Object... objects);
 
     /**
      * Emit a scenario with eventId and contextual data to the runabout ingest API.

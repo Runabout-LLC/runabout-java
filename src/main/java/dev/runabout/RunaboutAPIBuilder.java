@@ -1,6 +1,6 @@
 package dev.runabout;
 
-public class RunaboutEmitterBuilder {
+public class RunaboutAPIBuilder {
 
     private int    readTimeout;
     private int    connectTimeout;
@@ -11,7 +11,7 @@ public class RunaboutEmitterBuilder {
     /**
      * Constructor sets default values.
      */
-    public RunaboutEmitterBuilder() {
+    public RunaboutAPIBuilder() {
         readTimeout = 10000;
         connectTimeout = 30000;
         maxBodyLength = 50_000;
@@ -29,7 +29,7 @@ public class RunaboutEmitterBuilder {
      * @param readTimeout integer timeout.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutEmitterBuilder setReadTimeout(int readTimeout) {
+    public RunaboutAPIBuilder setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
         return this;
     }
@@ -44,7 +44,7 @@ public class RunaboutEmitterBuilder {
      * @param connectTimeout integer timeout.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutEmitterBuilder setConnectTimeout(int connectTimeout) {
+    public RunaboutAPIBuilder setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
         return this;
     }
@@ -59,7 +59,7 @@ public class RunaboutEmitterBuilder {
      * @param maxBodyLength integer maximum number of bytes.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutEmitterBuilder setMaxBodyLength(int maxBodyLength) {
+    public RunaboutAPIBuilder setMaxBodyLength(int maxBodyLength) {
         this.maxBodyLength = maxBodyLength;
         return this;
     }
@@ -74,7 +74,7 @@ public class RunaboutEmitterBuilder {
      * @param maxThreads integer total number of threads.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutEmitterBuilder setMaxThreads(int maxThreads) {
+    public RunaboutAPIBuilder setMaxThreads(int maxThreads) {
         this.maxThreads = maxThreads;
         return this;
     }
@@ -89,7 +89,7 @@ public class RunaboutEmitterBuilder {
      * @param ingestURL String url to make requests to.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutEmitterBuilder setIngestURL(String ingestURL) {
+    public RunaboutAPIBuilder setIngestURL(String ingestURL) {
         this.ingestURL = ingestURL;
         return this;
     }

@@ -24,7 +24,7 @@ public class Logic1 {
     public String concatValuesLambdaLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
         logger.info(() -> RunaboutServiceBuilder.getDefaultBuilder("test")
                 .setCallerClassBlacklist(Set.of(Logger.class))
-                .build().toScenario(null, null, this, cc1, cc2).toJson());
+                .build().createScenario(null, null, this, cc1, cc2).toJson());
         return concatValues(cc1, cc2);
     }
 

@@ -13,16 +13,18 @@ public interface JsonObject {
      *
      * @param key   the key to associate with the value.
      * @param value the value to put into the JSON object.
+     * @return      the original JSON object.
      */
-    void put(String key, Boolean value);
+    JsonObject put(String key, Boolean value);
 
     /**
      * Puts a number value into the JSON object.
      *
      * @param key   the key to associate with the value.
      * @param value the value to put into the JSON object.
+     * @return      the original JSON object.
      */
-    void put(String key, Number value);
+    JsonObject put(String key, Number value);
 
 
     /**
@@ -30,16 +32,18 @@ public interface JsonObject {
      *
      * @param key   the key to associate with the value.
      * @param value the value to put into the JSON object.
+     * @return      the original JSON object.
      */
-    void put(String key, String value);
+    JsonObject put(String key, String value);
 
     /**
      * Puts a JSON object value into the JSON object.
      *
      * @param key   the key to associate with the value.
      * @param value the value to put into the JSON object.
+     * @return      the original JSON object.
      */
-    void put(String key, JsonObject value);
+    JsonObject put(String key, JsonObject value);
 
     /**
      * Puts a list of values into the JSON object.
@@ -48,8 +52,9 @@ public interface JsonObject {
      * @param clazz  the class of the values.
      * @param values the values to put into the JSON object.
      * @param <T>    the type of the values.
+     * @return       the original JSON object.
      */
-    <T> void put(String key, Class<T> clazz, List<T> values);
+    <T> JsonObject put(String key, Class<T> clazz, List<T> values);
 
     /**
      * Converts the JSON object to a JSON string.

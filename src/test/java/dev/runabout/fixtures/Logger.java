@@ -6,9 +6,7 @@ import dev.runabout.RunaboutServiceBuilder;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.sql.Struct;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -51,7 +49,7 @@ public class Logger {
     };
 
     final RunaboutService<JsonObject> runaboutService = RunaboutServiceBuilder
-            .getDefaultBuilder("test")
+            .getDefaultBuilder("dada")
             .setCallerClassBlacklist(Set.of(Logger.class))
             .build();
 
@@ -61,7 +59,7 @@ public class Logger {
 
     public void runaboutInfo(final Object... objects) {
         runaboutService.emitScenario(event, properties, objects);
-        info(() -> runaboutService.toScenario(null, null, objects).toJson());
+        info(() -> runaboutService.createScenario(null, null, objects).toJson());
     }
 
     public void info(final Supplier<String> supplier) {

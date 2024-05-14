@@ -24,14 +24,14 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     private final Supplier<T> jsonFactory;
     private final Supplier<Timestamp> datetimeSupplier;
     private final Function<Method, String> methodToStringFunction;
-    private final RunaboutEmitter emitter;
+    private final RunaboutAPI emitter;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
     RunaboutServiceImpl(String projectName, boolean excludeSuper, Consumer<Throwable> throwableConsumer,
                         Supplier<Method> callerSupplier, RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
                         Supplier<Timestamp> datetimeSupplier, Function<Method, String> methodToStringFunction,
-                        RunaboutEmitter emitter) {
+                        RunaboutAPI emitter) {
         this.projectName = projectName;
         this.throwableConsumer = throwableConsumer;
         this.excludeSuper = excludeSuper;
@@ -67,7 +67,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public T toScenario(final String eventId, final T properties, final Object... objects) {
+    public T createScenario(final String eventId, final T properties, final Object... objects) {
 
         final Method method = Objects.requireNonNull(callerSupplier.get(),
                 "RunaboutService unable to determine caller method.");
@@ -98,7 +98,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
 
     @Override
     public void emitScenario(String eventId, T properties, final Object... objects) {
-        final T json = toScenario(eventId, properties, objects);
+        final T json = createScenario(eventId, properties, objects);
         emitter.queueEmission(json);
     }
 

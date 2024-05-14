@@ -14,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class RunaboutEmitter {
+class RunaboutAPI {
 
     private final int readTimeout;
     private final int connectTimeout;
@@ -27,12 +27,12 @@ class RunaboutEmitter {
     private final Runnable failedToQueueCallback;
     private final BlockingQueue<JsonObject> eventQueue;
 
-    RunaboutEmitter(final RunaboutEmitterBuilder builder) {
+    RunaboutAPI(final RunaboutAPIBuilder builder) {
         this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
                 builder.getIngestURL());
     }
 
-    RunaboutEmitter(int readTimeout, int connectTimeout, int maxBodyLength, int threadCount, String ingestURL) {
+    RunaboutAPI(int readTimeout, int connectTimeout, int maxBodyLength, int threadCount, String ingestURL) {
         this.ingestURI = toURI(ingestURL);
         this.readTimeout = readTimeout;
         this.connectTimeout = connectTimeout;
@@ -61,8 +61,12 @@ class RunaboutEmitter {
      * @param contents String json contents.
      */
     void emit(final String contents) {
-        final HttpRequest request = requestBuilder.POST(HttpRequest.BodyPublishers.ofString(contents)).build();
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding());
+        final HttpRequest request = requestBuilder
+
+                .POST(HttpRequest.BodyPublishers.ofString(contents)).build();
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                .thenApply(HttpResponse::statusCode)
+                .thenAccept(i -> { if (i < 200 || i >= 300) System.err.println("Failed to emit event: " + i); });
     }
 
     private static URI toURI(final String url) {

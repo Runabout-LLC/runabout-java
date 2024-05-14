@@ -3,7 +3,6 @@ package dev.runabout;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -27,7 +26,7 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     private Supplier<Timestamp> datetimeSupplier;
     private Function<Method, String> methodToStringFunction;
     private Predicate<StackWalker.StackFrame> stackFramePredicate;
-    private RunaboutEmitterBuilder emitterBuilder;
+    private RunaboutAPIBuilder emitterBuilder;
 
     private final String projectName;
     private final Supplier<T> jsonFactory;
@@ -165,12 +164,12 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
     }
 
     /**
-     * Sets the RunaboutEmitterBuilder which controls settings for the created {@link RunaboutEmitter}.
+     * Sets the RunaboutEmitterBuilder which controls settings for the created {@link RunaboutAPI}.
      *
      * @param emitterBuilder Runabout emitter builder with custom values set.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setEmitterBuilder(RunaboutEmitterBuilder emitterBuilder) {
+    public RunaboutServiceBuilder<T> setEmitterBuilder(RunaboutAPIBuilder emitterBuilder) {
         this.emitterBuilder = emitterBuilder;
         return this;
     }
@@ -216,9 +215,9 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
         final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
                 .orElse(RunaboutUtils::methodToRunaboutString);
 
-        final RunaboutEmitterBuilder emitterBuilderFinal = Optional.ofNullable(this.emitterBuilder)
-                .orElseGet(RunaboutEmitterBuilder::new);
-        final RunaboutEmitter emitter = new RunaboutEmitter(emitterBuilderFinal);
+        final RunaboutAPIBuilder emitterBuilderFinal = Optional.ofNullable(this.emitterBuilder)
+                .orElseGet(RunaboutAPIBuilder::new);
+        final RunaboutAPI emitter = new RunaboutAPI(emitterBuilderFinal);
 
         return new RunaboutServiceImpl<>(projectName, excludeSuper, throwableConsumerFinal, callerSupplierFinal,
                 customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal, emitter);
