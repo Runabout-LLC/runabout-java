@@ -108,10 +108,10 @@ class RunaboutServiceImpl implements RunaboutService {
         // Try RunaboutEnabled annotated constructors
         //
 
-        RunaboutInput input;
+        RunaboutInput input = null;
 
         final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
-                .filter(c -> c.isAnnotationPresent(ToRunabout.class))
+                .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
                 .findFirst().orElse(null);
 
         if (constructor != null) {
@@ -139,9 +139,10 @@ class RunaboutServiceImpl implements RunaboutService {
                 }
             }
 
-
             final List<ParameterField> parameterFields = Arrays.stream(constructor.getParameters())
-                    .collect(Collectors.toMap(parameter -> new ParameterField(parameter.getName(), parameter.getType()), p -> p));
+                    .map(parameter -> new ParameterField(parameter.isAnnotationPresent(RunaboutEnabled.class) ?
+                            parameter.getAnnotation(RunaboutParameter.class).value() : parameter.getName(), parameter.getType()))
+                    .collect(Collectors.toList());
 
             final Map<ParameterField, Integer> parameterFieldMap = new HashMap<>();
             for (int i = 0; i < parameterFields.size(); i++) {
@@ -149,7 +150,7 @@ class RunaboutServiceImpl implements RunaboutService {
             }
 
             final List<Field> fields = new ArrayList<>(parameterFields.size());
-            Arrays.stream(clazz.getFields())
+            Arrays.stream(clazz.getDeclaredFields())
                     .takeWhile(f -> !parameterFieldMap.isEmpty())
                     .forEach(f -> {
                         final ParameterField pf = new ParameterField(f.getName(), f.getType());
@@ -162,22 +163,18 @@ class RunaboutServiceImpl implements RunaboutService {
             //
             // VALIDATION TODO COMMENT
             //
-            if (parameterFields.isEmpty()) {
-                final StringBuilder eval = new StringBuilder("new ").append(clazz.getCanonicalName()).append("(");
+            if (parameterFieldMap.isEmpty()) {
+                final StringBuilder eval = new StringBuilder("new ").append(clazz.getSimpleName()).append("(");
                 final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
 
                 for (Field field : fields) {
 
                     Object value = null;
-                    final boolean access = field.canAccess(object);
-                    field.setAccessible(true);
+                    field.setAccessible(true); // Safe because Class.getFields always returns a new copy of the fields.
                     try {
                         value = field.get(object);
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
-                    }
-                    if (!access) {
-                        field.setAccessible(false);
                     }
 
                     RunaboutInput fieldInput = serialize(value);
