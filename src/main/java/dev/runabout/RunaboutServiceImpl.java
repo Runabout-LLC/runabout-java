@@ -1,18 +1,25 @@
 package dev.runabout;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 class RunaboutServiceImpl implements RunaboutService {
 
@@ -94,13 +101,108 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {
-        RunaboutInput input;
+
         Class<?> clazz = object.getClass();
-        input = invokeInstanceSerializer(object, clazz);
-        while (!this.excludeSuper & input == null && clazz.getSuperclass() != null) {
-            clazz = clazz.getSuperclass();
-            input = invokeInstanceSerializer(object, clazz);
+
+        //
+        // Try RunaboutEnabled annotated constructors
+        //
+
+        RunaboutInput input;
+
+        final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
+                .filter(c -> c.isAnnotationPresent(ToRunabout.class))
+                .findFirst().orElse(null);
+
+        if (constructor != null) {
+
+            class ParameterField {
+                private final String name;
+                private final Class<?> type;
+
+                public ParameterField(String name, Class<?> type) {
+                    this.name = name;
+                    this.type = type;
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ParameterField that = (ParameterField) object;
+                    return Objects.equals(name, that.name) && Objects.equals(type, that.type);// TODO make type equality more nuanced
+                }
+
+                @Override
+                public int hashCode() {
+                    return Objects.hash(name);
+                }
+            }
+
+
+            final List<ParameterField> parameterFields = Arrays.stream(constructor.getParameters())
+                    .collect(Collectors.toMap(parameter -> new ParameterField(parameter.getName(), parameter.getType()), p -> p));
+
+            final Map<ParameterField, Integer> parameterFieldMap = new HashMap<>();
+            for (int i = 0; i < parameterFields.size(); i++) {
+                parameterFieldMap.put(parameterFields.get(i), i);
+            }
+
+            final List<Field> fields = new ArrayList<>(parameterFields.size());
+            Arrays.stream(clazz.getFields())
+                    .takeWhile(f -> !parameterFieldMap.isEmpty())
+                    .forEach(f -> {
+                        final ParameterField pf = new ParameterField(f.getName(), f.getType());
+                        final Integer index = parameterFieldMap.remove(pf);
+                        if (index != null) {
+                            fields.add(index, f);
+                        }
+                    });
+
+            //
+            // VALIDATION TODO COMMENT
+            //
+            if (parameterFields.isEmpty()) {
+                final StringBuilder eval = new StringBuilder("new ").append(clazz.getCanonicalName()).append("(");
+                final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
+
+                for (Field field : fields) {
+
+                    Object value = null;
+                    final boolean access = field.canAccess(object);
+                    field.setAccessible(true);
+                    try {
+                        value = field.get(object);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (!access) {
+                        field.setAccessible(false);
+                    }
+
+                    RunaboutInput fieldInput = serialize(value);
+                    if (fieldInput == null || fieldInput.getEval() == null || fieldInput.getEval().isEmpty()) {
+                        fieldInput = DefaultSerializer.getNullInput();
+                    }
+                    eval.append(fieldInput.getEval()).append(", ");
+                    dependencies.addAll(fieldInput.getDependencies());
+                }
+
+                input = RunaboutInput.of(eval.toString(), dependencies);
+            }
         }
+
+        //
+        // Try ToRunabout annotated methods.
+        //
+        if (input == null) {
+            input = invokeInstanceSerializer(object, clazz);
+            while (!this.excludeSuper & input == null && clazz.getSuperclass() != null) {
+                clazz = clazz.getSuperclass();
+                input = invokeInstanceSerializer(object, clazz);
+            }
+        }
+
         return input;
     }
 

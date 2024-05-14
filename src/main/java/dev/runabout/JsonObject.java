@@ -1,7 +1,6 @@
 package dev.runabout;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * A lightweight interface for dealing with JSON objects.
