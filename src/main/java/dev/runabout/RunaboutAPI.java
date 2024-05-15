@@ -1,5 +1,7 @@
 package dev.runabout;
 
+import dev.runabout.annotations.Nullable;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -7,50 +9,42 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 class RunaboutAPI {
-
-    private final int readTimeout;
-    private final int connectTimeout;
-    private final int maxBodyLength;
+    private final long timeout;
     private final URI ingestURI;
-    private final int queueSize;
+    private final Supplier<String> apiTokenSupplier;
     private final ExecutorService executorService;
     private final HttpClient httpClient;
     private final HttpRequest.Builder requestBuilder;
-    private final Runnable failedToQueueCallback;
+    private final RunaboutListener listener;
     private final BlockingQueue<JsonObject> eventQueue;
 
-    RunaboutAPI(final RunaboutAPIBuilder builder) {
-        this(builder.getReadTimeout(), builder.getConnectTimeout(), builder.getMaxBodyLength(), builder.getMaxThreads(),
-                builder.getIngestURL());
-    }
-
-    RunaboutAPI(int readTimeout, int connectTimeout, int maxBodyLength, int threadCount, String ingestURL) {
-        this.ingestURI = toURI(ingestURL);
-        this.readTimeout = readTimeout;
-        this.connectTimeout = connectTimeout;
-        this.maxBodyLength = maxBodyLength;
-        this.queueSize = 1000; // TODO
-        this.eventQueue = new ArrayBlockingQueue<>(queueSize);
-        executorService = Executors.newFixedThreadPool(threadCount);
-        httpClient = HttpClient.newBuilder()
+    RunaboutAPI(final RunaboutAPIConfig builder, @Nullable final RunaboutListener listener) {
+        this.apiTokenSupplier = builder.getApiTokenSupplier();
+        this.ingestURI = toURI(builder.getIngestURL());
+        this.timeout = builder.getTimeout();
+        this.eventQueue = new ArrayBlockingQueue<>(builder.getQueueSize());
+        this.executorService = Executors.newFixedThreadPool(builder.getThreads());
+        this.httpClient = HttpClient.newBuilder()
                 .build();
-        requestBuilder = HttpRequest.newBuilder()
+        this.requestBuilder = HttpRequest.newBuilder()
                 .header("Content-Type", "application/json")
                 .uri(ingestURI);
-        failedToQueueCallback = () -> {};
+        this.listener = listener;
     }
 
-    public void queueEmission(final JsonObject object) {
+    public void post(final JsonObject object) {
         if (!eventQueue.offer(object)) {
-            failedToQueueCallback.run();
+            listener.onError(new RunaboutException("Event queue is full"));
         }
         executorService.execute(new Worker());
     }
@@ -60,13 +54,24 @@ class RunaboutAPI {
      *
      * @param contents String json contents.
      */
-    private void emit(final String contents) {
+    private void post(final String contents) {
         final HttpRequest request = requestBuilder
-
+                .setHeader("Authorization", "Bearer " + apiTokenSupplier.get())
                 .POST(HttpRequest.BodyPublishers.ofString(contents)).build();
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
+                .orTimeout(timeout, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .thenApply(HttpResponse::statusCode)
-                .thenAccept(i -> { if (i < 200 || i >= 300) System.err.println("Failed to emit event: " + i); });
+                .thenAccept(code -> {
+                    if (code < 200 || code >= 300) {
+                        Optional.ofNullable(listener)
+                                .ifPresent(l -> l.onAPIError(code, "TODO"));
+                    }
+                });
+
+        //
+        // Clear out the authorization header after the request is sent for security purposes.
+        //
+        requestBuilder.setHeader("Authorization", null);
     }
 
     private static URI toURI(final String url) {
@@ -82,17 +87,11 @@ class RunaboutAPI {
         @Override
         public void run() {
             try {
-                final JsonObject request = new JsonObjectImpl.JsonFactoryImpl().get(); // TODO parameterize
-                final List<JsonObject> events = new ArrayList<>();
-
-                while (!eventQueue.isEmpty()) {
-                    events.add(eventQueue.take());
-                }
-
-                if (!events.isEmpty()) {
-                    request.put("scenarios", JsonObject.class, events);
-                    final String contents = request.toJson();
-                    emit(contents);
+                final JsonObject event = eventQueue.poll(timeout, TimeUnit.MILLISECONDS);
+                if (event != null) {
+                    final JsonObject request = new JsonObjectImpl();
+                    request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(event));
+                    post(request.toJson());
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

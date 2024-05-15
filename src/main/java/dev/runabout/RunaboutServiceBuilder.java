@@ -1,5 +1,8 @@
 package dev.runabout;
 
+import dev.runabout.annotations.ToRunabout;
+import dev.runabout.utils.RunaboutUtils;
+
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -24,19 +27,22 @@ public class RunaboutServiceBuilder {
     private Supplier<Timestamp> datetimeSupplier;
     private Function<Method, String> methodToStringFunction;
     private Predicate<StackWalker.StackFrame> stackFramePredicate;
-    private RunaboutAPIBuilder emitterBuilder;
     private Supplier<JsonObject> jsonFactory;
+    private RunaboutListener listener;
 
     private final String projectName;
+    private final RunaboutAPIConfig apiConfig;
 
     /**
      * Creates a new RunaboutServiceBuilder with the given JSON object factory.
      * The supplier should create new instances of JSON objects.
      *
      * @param projectName The name of the project to log scenario under.
+     * @param apiConfig The configuration for the Runabout API.
      */
-    public RunaboutServiceBuilder(String projectName) {
+    public RunaboutServiceBuilder(String projectName, RunaboutAPIConfig apiConfig) {
         this.projectName = projectName;
+        this.apiConfig = apiConfig;
     }
 
     /**
@@ -163,14 +169,9 @@ public class RunaboutServiceBuilder {
         return this;
     }
 
-    /**
-     * Sets the RunaboutEmitterBuilder which controls settings for the created {@link RunaboutAPI}.
-     *
-     * @param emitterBuilder Runabout emitter builder with custom values set.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder setEmitterBuilder(RunaboutAPIBuilder emitterBuilder) {
-        this.emitterBuilder = emitterBuilder;
+    // TODO
+    public RunaboutServiceBuilder setListener(RunaboutListener listener) {
+        this.listener = listener;
         return this;
     }
 
@@ -210,17 +211,15 @@ public class RunaboutServiceBuilder {
                 .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
 
         final Supplier<Timestamp> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
-                .orElseGet(() -> () -> Timestamp.from(Instant.now()));
+                .orElse(() -> Timestamp.from(Instant.now()));
 
         final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
                 .orElse(RunaboutUtils::methodToRunaboutString);
 
-        final RunaboutAPIBuilder emitterBuilderFinal = Optional.ofNullable(this.emitterBuilder)
-                .orElseGet(RunaboutAPIBuilder::new);
-        final RunaboutAPI emitter = new RunaboutAPI(emitterBuilderFinal);
+        final RunaboutAPI api = new RunaboutAPI(apiConfig, listener);
 
         return new RunaboutServiceImpl(projectName, excludeSuper, throwableConsumerFinal, callerSupplierFinal,
-                customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal, emitter);
+                customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal, api);
     }
 
     private static void defaultThrowableConsumer(Throwable t) {

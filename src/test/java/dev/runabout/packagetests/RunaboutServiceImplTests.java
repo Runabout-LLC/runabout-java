@@ -4,7 +4,7 @@ import dev.runabout.JsonObject;
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
-import dev.runabout.ToRunabout;
+import dev.runabout.annotations.ToRunabout;
 import dev.runabout.fixtures.ConcreteClass1;
 import dev.runabout.fixtures.ConcreteClass2;
 import dev.runabout.fixtures.Logic1;

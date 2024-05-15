@@ -1,5 +1,7 @@
 package dev.runabout;
 
+import dev.runabout.annotations.Nullable;
+
 /**
  * Runabout interface for converting runtime java objects to JSON outputs that can be
  * used for replay debugging in <a href="https://www.runabout.dev">Runabout</a>.
@@ -13,10 +15,12 @@ public interface RunaboutService {
      * Gets the default RunaboutService which uses the built-in {@link JsonObject} type.
      *
      * @param projectName The name of the project to log scenarios under.
+     * @param apiToken    The API token for the Runabout project.
      * @return The default implementation of RunaboutService.
      */
-    static RunaboutService getService(final String projectName) {
-        return new RunaboutServiceBuilder(projectName).build();
+    static RunaboutService getService(final String projectName, final String apiToken) {
+        final RunaboutAPIConfig apiConfig = new RunaboutAPIConfig(() -> apiToken);
+        return new RunaboutServiceBuilder(projectName, apiConfig).build();
     }
 
     /**

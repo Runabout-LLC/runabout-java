@@ -1,4 +1,4 @@
-package dev.runabout;
+package dev.runabout.utils;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

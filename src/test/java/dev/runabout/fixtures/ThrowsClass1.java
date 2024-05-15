@@ -1,7 +1,7 @@
 package dev.runabout.fixtures;
 
 import dev.runabout.RunaboutInput;
-import dev.runabout.ToRunabout;
+import dev.runabout.annotations.ToRunabout;
 
 public class ThrowsClass1 {
 
