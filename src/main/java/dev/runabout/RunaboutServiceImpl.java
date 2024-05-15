@@ -100,7 +100,7 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public void sendScenario(String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(eventId, properties, objects);
-        api.queueEmission(scenario.toJsonObject(jsonFactory));
+        api.post(scenario.toJsonObject(jsonFactory));
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {
@@ -172,7 +172,7 @@ class RunaboutServiceImpl implements RunaboutService {
 
                 for (Field field : fields) {
 
-                    Object value = null;
+                    Object value;
                     field.setAccessible(true); // Safe because Class.getFields always returns a new copy of the fields.
                     try {
                         value = field.get(object);

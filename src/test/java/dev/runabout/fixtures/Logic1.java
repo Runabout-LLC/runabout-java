@@ -1,5 +1,6 @@
 package dev.runabout.fixtures;
 
+import dev.runabout.RunaboutAPIConfig;
 import dev.runabout.RunaboutServiceBuilder;
 
 import java.io.OutputStream;
@@ -22,7 +23,7 @@ public class Logic1 {
     }
 
     public String concatValuesLambdaLogger(final ConcreteClass1 cc1, final ConcreteClass2 cc2) {
-        logger.info(() -> new RunaboutServiceBuilder("test")
+        logger.info(() -> new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
                 .setCallerClassBlacklist(Set.of(Logger.class))
                 .build().createScenario(null, null, this, cc1, cc2).toJsonObject().toJson());
         return concatValues(cc1, cc2);

@@ -1,6 +1,7 @@
 package dev.runabout.packagetests;
 
 import dev.runabout.JsonObject;
+import dev.runabout.RunaboutAPIConfig;
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
@@ -93,7 +94,7 @@ public class RunaboutServiceImplTests {
     void testNoSerializerFound() {
 
         final UnknownClass1 object = new UnknownClass1("field1", "field2");
-        final RunaboutService runaboutService = RunaboutService.getService("test");
+        final RunaboutService runaboutService = RunaboutService.getService("test", null);
 
         // Test serialize method
         final RunaboutInput runaboutInput = runaboutService.serialize(object);
@@ -115,7 +116,7 @@ public class RunaboutServiceImplTests {
     @Test
     void testInstanceSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass1 throwsInstance = new ThrowsClass1("george", "washington");
@@ -131,7 +132,7 @@ public class RunaboutServiceImplTests {
     @Test
     void testGenericSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
                 .setThrowableConsumer(thrown::add)
                 .build();
         final ThrowsClass2 throwsInstance = new ThrowsClass2("george", "washington");

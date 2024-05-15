@@ -1,7 +1,7 @@
 package dev.runabout.fixtures;
 
-import dev.runabout.RunaboutEnabled;
-import dev.runabout.RunaboutParameter;
+import dev.runabout.annotations.RunaboutEnabled;
+import dev.runabout.annotations.RunaboutParameter;
 
 import java.util.Map;
 
