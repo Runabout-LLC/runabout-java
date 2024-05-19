@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  */
 public class RunaboutServiceBuilder {
 
-    private boolean excludeSuper = false;
+    private boolean excludeSuper;
     private Supplier<Method> callerSupplier;
     private Set<Class<?>> callerClassBlacklist;
     private RunaboutSerializer customSerializer;
