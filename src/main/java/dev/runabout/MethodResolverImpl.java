@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-class DefaultCallerSupplier implements Supplier<Method> {
+class MethodResolverImpl implements MethodResolver {
 
     private static final Set<StackWalker.Option> options = Set.of(
             StackWalker.Option.RETAIN_CLASS_REFERENCE,
@@ -19,7 +19,11 @@ class DefaultCallerSupplier implements Supplier<Method> {
 
     private final Predicate<StackWalker.StackFrame> stackFramePredicate;
 
-    DefaultCallerSupplier(final Predicate<StackWalker.StackFrame> stackFramePredicate) {
+    MethodResolverImpl() {
+        this(stackFrame -> true);
+    }
+
+    MethodResolverImpl(final Predicate<StackWalker.StackFrame> stackFramePredicate) {
         this.stackFramePredicate = stackFramePredicate;
     }
 

@@ -56,6 +56,7 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
 
     @Override
     public String toJson() {
+        // TODO check for recursion ?
 
         final StringJoiner commaJoiner = new StringJoiner(",");
 

@@ -9,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,39 +20,32 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class RunaboutServiceImpl implements RunaboutService {
 
     private final String projectName;
-    private final boolean excludeSuper;
-    private final Consumer<Throwable> throwableConsumer;
-    private final Supplier<Method> callerSupplier;
+    private final RunaboutApi runaboutApi;
+    private final MethodResolver methodResolver;
+    private final RunaboutListener listener;
     private final RunaboutSerializer customSerializer;
     private final Supplier<JsonObject> jsonFactory;
-    private final Supplier<Timestamp> datetimeSupplier;
-    private final Function<Method, String> methodToStringFunction;
-    private final RunaboutAPI api;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
-    RunaboutServiceImpl(String projectName, boolean excludeSuper, Consumer<Throwable> throwableConsumer,
-                        Supplier<Method> callerSupplier, RunaboutSerializer customSerializer,
-                        Supplier<JsonObject> jsonFactory,
-                        Supplier<Timestamp> datetimeSupplier, Function<Method, String> methodToStringFunction,
-                        RunaboutAPI api) {
+    RunaboutServiceImpl(String projectName,
+                        RunaboutApi runaboutApi,
+                        MethodResolver methodResolver,
+                        RunaboutListener listener,
+                        RunaboutSerializer customSerializer,
+                        Supplier<JsonObject> jsonFactory) {
         this.projectName = projectName;
-        this.throwableConsumer = throwableConsumer;
-        this.excludeSuper = excludeSuper;
-        this.callerSupplier = callerSupplier;
+        this.methodResolver = methodResolver;
         this.customSerializer = customSerializer;
         this.jsonFactory = jsonFactory;
-        this.datetimeSupplier = datetimeSupplier;
-        this.methodToStringFunction = methodToStringFunction;
-        this.api = api;
+        this.runaboutApi = runaboutApi;
+        this.listener = listener;
     }
 
     @Override
@@ -80,11 +74,8 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public RunaboutScenario createScenario(final String eventId, final JsonObject properties, final Object... objects) {
 
-        final Timestamp datetime = datetimeSupplier.get();
-
-        final Method method = Objects.requireNonNull(callerSupplier.get(),
-                "RunaboutService unable to determine caller method.");
-        final String method_reference = methodToStringFunction.apply(method);
+        final Timestamp datetime = getDatetime();
+        final String method = methodResolver.getSerializedMethod();
 
         final List<RunaboutInstance> instances = new ArrayList<>();
         for (final Object object: objects) {
@@ -94,13 +85,13 @@ class RunaboutServiceImpl implements RunaboutService {
             instances.add(instance);
         }
 
-        return new RunaboutScenario(method_reference, eventId, projectName, datetime, properties, instances);
+        return new RunaboutScenario(method, eventId, projectName, datetime, properties, instances);
     }
 
     @Override
     public void sendScenario(String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(eventId, properties, objects);
-        api.post(scenario.toJsonObject(jsonFactory));
+        runaboutApi.ingestScenario(scenario.toJsonObject(jsonFactory));
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {
@@ -197,7 +188,7 @@ class RunaboutServiceImpl implements RunaboutService {
         //
         if (input == null) {
             input = invokeInstanceSerializer(object, clazz);
-            while (!this.excludeSuper & input == null && clazz.getSuperclass() != null) {
+            while (input == null && clazz.getSuperclass() != null) {
                 clazz = clazz.getSuperclass();
                 input = invokeInstanceSerializer(object, clazz);
             }
@@ -233,9 +224,9 @@ class RunaboutServiceImpl implements RunaboutService {
             }
 
         } catch (InvocationTargetException e) {
-            throwableConsumer.accept(e.getCause() != null ? e.getCause() : e);
+            listener.onError(e.getCause() != null ? e.getCause() : e);
         } catch (Throwable t) {
-            throwableConsumer.accept(t);
+            listener.onError(t);
         }
 
         return input;
@@ -253,7 +244,7 @@ class RunaboutServiceImpl implements RunaboutService {
                 }
 
             } catch (Throwable ex) {
-                throwableConsumer.accept(ex);
+                listener.onError(ex);
             }
         }
 
@@ -277,5 +268,9 @@ class RunaboutServiceImpl implements RunaboutService {
                 .map(c -> c.getInterfaces().length > 0 ? c.getInterfaces()[0] : c.getSuperclass())
                 .map(Class::getCanonicalName)
                 .orElse("null");
+    }
+
+    private static Timestamp getDatetime() {
+        return Timestamp.from(Instant.now());
     }
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-class RunaboutAPI {
+class RunaboutApiImpl {
     private final long timeout;
     private final URI ingestURI;
     private final Supplier<String> apiTokenSupplier;
@@ -28,7 +28,7 @@ class RunaboutAPI {
     private final RunaboutListener listener;
     private final BlockingQueue<JsonObject> eventQueue;
 
-    RunaboutAPI(final RunaboutAPIConfig builder, @Nullable final RunaboutListener listener) {
+    RunaboutApiImpl(final RunaboutAPIConfig builder, @Nullable final RunaboutListener listener) {
         this.apiTokenSupplier = builder.getApiTokenSupplier();
         this.ingestURI = toURI(builder.getIngestURL());
         this.timeout = builder.getTimeout();
@@ -42,7 +42,7 @@ class RunaboutAPI {
         this.listener = listener;
     }
 
-    public void post(final JsonObject object) {
+    public void ingestScenario(final JsonObject object) {
         if (!eventQueue.offer(object)) {
             listener.onError(new RunaboutException("Event queue is full"));
         }
@@ -54,7 +54,7 @@ class RunaboutAPI {
      *
      * @param contents String json contents.
      */
-    private void post(final String contents) {
+    private void ingestScenario(final String contents) {
         final HttpRequest request = requestBuilder
                 .setHeader("Authorization", "Bearer " + apiTokenSupplier.get())
                 .POST(HttpRequest.BodyPublishers.ofString(contents)).build();
@@ -91,7 +91,7 @@ class RunaboutAPI {
                 if (event != null) {
                     final JsonObject request = new JsonObjectImpl();
                     request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(event));
-                    post(request.toJson());
+                    ingestScenario(request.toJson());
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
