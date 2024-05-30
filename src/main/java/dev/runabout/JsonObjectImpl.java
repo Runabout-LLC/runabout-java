@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.function.Supplier;
 
 class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
 
@@ -56,7 +55,6 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
 
     @Override
     public String toJson() {
-        // TODO check for recursion ?
 
         final StringJoiner commaJoiner = new StringJoiner(",");
 
@@ -91,13 +89,5 @@ class JsonObjectImpl extends HashMap<String, Object> implements JsonObject {
         }
 
         return string;
-    }
-
-    static class JsonFactoryImpl implements Supplier<JsonObject> {
-
-        @Override
-        public JsonObjectImpl get() {
-            return new JsonObjectImpl();
-        }
     }
 }

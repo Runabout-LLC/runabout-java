@@ -2,14 +2,13 @@ package dev.runabout;
 
 import dev.runabout.annotations.Nullable;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -19,32 +18,34 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 class RunaboutApiImpl implements RunaboutApi {
+
+    @Nullable
+    private final RunaboutListener listener;
+
     private final long timeout;
-    private final URI ingestURI;
+    private final HttpClient httpClient;
     private final Supplier<String> apiTokenSupplier;
     private final ExecutorService executorService;
-    private final HttpClient httpClient;
     private final HttpRequest.Builder requestBuilder;
-    private final RunaboutListener listener;
-    private final BlockingQueue<JsonObject> eventQueue;
+    private final BlockingQueue<RunaboutScenario> scenarioQueue;
 
     RunaboutApiImpl(final RunaboutApiBuilder builder) {
-        this.apiTokenSupplier = builder.getApiTokenSupplier();
-        this.ingestURI = toURI(builder.getIngestURL());
+        this.listener = builder.getListener();
         this.timeout = builder.getTimeout();
-        this.eventQueue = new ArrayBlockingQueue<>(builder.getQueueSize());
+        this.apiTokenSupplier = builder.getApiTokenSupplier();
         this.executorService = Executors.newFixedThreadPool(builder.getThreads());
-        this.httpClient = HttpClient.newBuilder()
-                .build();
+        this.scenarioQueue = new ArrayBlockingQueue<>(builder.getQueueSize());
+        this.httpClient = HttpClient.newBuilder().build();
+        final URI ingestURI = toURI(builder.getUrl());
         this.requestBuilder = HttpRequest.newBuilder()
                 .header("Content-Type", "application/json")
                 .uri(ingestURI);
-        this.listener = null; // TODO
     }
 
-    public void ingestScenario(final JsonObject object) {
-        if (!eventQueue.offer(object)) {
-            listener.onError(new RunaboutException("Event queue is full"));
+    public void ingestScenario(final RunaboutScenario scenario) {
+        Objects.requireNonNull(scenario.getMethod(), "Scenario cannot be null");
+        if (!scenarioQueue.offer(scenario)) {
+            onError(new RunaboutException("Runabout scenario queue is full"));
         }
         executorService.execute(new Worker());
     }
@@ -57,14 +58,14 @@ class RunaboutApiImpl implements RunaboutApi {
     private void ingestScenario(final String contents) {
         final HttpRequest request = requestBuilder
                 .setHeader("Authorization", "Bearer " + apiTokenSupplier.get())
-                .POST(HttpRequest.BodyPublishers.ofString(contents)).build();
+                .POST(HttpRequest.BodyPublishers.ofString(contents))
+                .build();
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
                 .orTimeout(timeout, java.util.concurrent.TimeUnit.MILLISECONDS)
                 .thenApply(HttpResponse::statusCode)
                 .thenAccept(code -> {
                     if (code < 200 || code >= 300) {
-                        Optional.ofNullable(listener)
-                                .ifPresent(l -> l.onError(new RunaboutException("API error: " + code)));// TODO
+                        onError(new RunaboutException("Runabout API error. Error code: " + code));
                     }
                 });
 
@@ -72,6 +73,10 @@ class RunaboutApiImpl implements RunaboutApi {
         // Clear out the authorization header after the request is sent for security purposes.
         //
         requestBuilder.setHeader("Authorization", null);
+    }
+
+    private void onError(final Throwable t) {
+        Optional.ofNullable(listener).ifPresent(l -> l.onError(t));
     }
 
     private static URI toURI(final String url) {
@@ -87,10 +92,11 @@ class RunaboutApiImpl implements RunaboutApi {
         @Override
         public void run() {
             try {
-                final JsonObject event = eventQueue.poll(timeout, TimeUnit.MILLISECONDS);
-                if (event != null) {
+                final RunaboutScenario scenario = scenarioQueue.poll(timeout, TimeUnit.MILLISECONDS);
+                if (scenario != null) {
                     final JsonObject request = new JsonObjectImpl();
-                    request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(event));
+                    final JsonObject scenarioJson = scenario.toJsonObject();
+                    request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(scenarioJson));
                     ingestScenario(request.toJson());
                 }
             } catch (InterruptedException e) {

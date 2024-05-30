@@ -30,7 +30,6 @@ class RunaboutServiceImpl implements RunaboutService {
     private final MethodResolver methodResolver;
     private final RunaboutListener listener;
     private final RunaboutSerializer customSerializer;
-    private final Supplier<JsonObject> jsonFactory;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
@@ -38,12 +37,10 @@ class RunaboutServiceImpl implements RunaboutService {
                         RunaboutApi runaboutApi,
                         MethodResolver methodResolver,
                         RunaboutListener listener,
-                        RunaboutSerializer customSerializer,
-                        Supplier<JsonObject> jsonFactory) {
+                        RunaboutSerializer customSerializer) {
         this.projectName = projectName;
         this.methodResolver = methodResolver;
         this.customSerializer = customSerializer;
-        this.jsonFactory = jsonFactory;
         this.runaboutApi = runaboutApi;
         this.listener = listener;
     }
@@ -91,7 +88,7 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public void saveScenario(String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(eventId, properties, objects);
-        runaboutApi.ingestScenario(scenario.toJsonObject(jsonFactory));
+        runaboutApi.ingestScenario(scenario);
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {

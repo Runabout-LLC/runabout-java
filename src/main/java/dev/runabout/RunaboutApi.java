@@ -1,8 +1,16 @@
 package dev.runabout;
 
-// TODO docs
+/**
+ * Runabout interface representing Runabout API endpoints relevant to the library.
+ * The library comes with a default implementation and a builder to meet most use cases.
+ * See {@link RunaboutApiBuilder} for more information.
+ */
 public interface RunaboutApi {
 
-    // TODO
-    void ingestScenario(final JsonObject scenario);
+    /**
+     * Saves a scenario via the Runabout Ingest API.
+     *
+     * @param scenario The scenario to save.
+     */
+    void ingestScenario(final RunaboutScenario scenario);
 }

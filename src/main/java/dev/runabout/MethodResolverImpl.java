@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 class MethodResolverImpl implements MethodResolver {
 
@@ -28,7 +27,7 @@ class MethodResolverImpl implements MethodResolver {
     }
 
     @Override
-    public Method get() {
+    public Method getMethod() {
 
         final AtomicBoolean failed = new AtomicBoolean(false);
         final AtomicReference<Method> method = new AtomicReference<>();
@@ -47,11 +46,6 @@ class MethodResolverImpl implements MethodResolver {
         });
 
         return method.get();
-    }
-
-    public static Predicate<StackWalker.StackFrame> getCallerClassPredicate(final Set<Class<?>> callerClassBlackList) {
-        return stackFrame -> stackFrame != null && stackFrame.getDeclaringClass() != null &&
-                !callerClassBlackList.contains(stackFrame.getDeclaringClass());
     }
 
     private static boolean isLambdaMethod(final StackWalker.StackFrame stackFrame) {

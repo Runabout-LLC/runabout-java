@@ -3,7 +3,6 @@ package dev.runabout;
 // TODO
 public class RunaboutException extends RuntimeException {
 
-
     public RunaboutException(String message) {
         super(message);
     }

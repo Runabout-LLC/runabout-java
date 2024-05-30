@@ -20,5 +20,6 @@ class RunaboutConstants {
     public static final String INSTANCES_KEY = "instances";
     public static final String SCENARIOS_KEY = "scenarios";
 
-    public static final String INGEST_URL = "https://api.runabout.dev/ingest";
+    public static final String INGEST_BASE_URL = "https://ingest.runabout.dev/";
+    public static final String INGEST_SCENARIOS_URL = INGEST_BASE_URL + "scenarios";
 }

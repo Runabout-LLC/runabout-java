@@ -3,6 +3,12 @@ package dev.runabout;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * A builder for the default implementation of {@link MethodResolver}.
+ * The default implementation will use a {@link StackWalker} to determine the first non-anonymous, non-lambda method
+ * that is not in the {@link RunaboutService} package. This builder provides ways to further filter the stack frames,
+ * so that the correct method is determined.
+ */
 public class MethodResolverBuilder {
 
     private Set<Class<?>> callerClassBlacklist;

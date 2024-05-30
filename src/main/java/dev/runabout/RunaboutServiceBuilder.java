@@ -1,14 +1,9 @@
 package dev.runabout;
 
-import dev.runabout.annotations.Nullable;
-
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.function.Supplier;
 
 /**
  * A builder for creating a RunaboutService.
@@ -20,7 +15,6 @@ public class RunaboutServiceBuilder {
     //
     private MethodResolver methodResolver;
     private RunaboutSerializer customSerializer;
-    private Supplier<JsonObject> jsonFactory;
     private RunaboutListener listener;
     private RunaboutApi runaboutApi;
 
@@ -41,19 +35,6 @@ public class RunaboutServiceBuilder {
 
     public RunaboutServiceBuilder setRunaboutApi(final RunaboutApi runaboutApi) {
         this.runaboutApi = runaboutApi;
-        return this;
-    }
-
-    /**
-     * Sets the JSON object factory for the RunaboutService.
-     * The supplier should create new instances of JSON objects.
-     * By default, the service will use {@link JsonObjectImpl::new}.
-     *
-     * @param jsonFactory The JSON object factory.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder setJsonFactory(final Supplier<JsonObject> jsonFactory) {
-        this.jsonFactory = jsonFactory;
         return this;
     }
 
@@ -104,17 +85,17 @@ public class RunaboutServiceBuilder {
         final MethodResolver methodResolverFinal = resolveService(methodResolver, MethodResolver.class)
                 .orElseGet(MethodResolverImpl::new);
 
-        final Supplier<JsonObject> jsonFactory = Optional.ofNullable(this.jsonFactory)
-                .orElse(JsonObjectImpl::new);
-
         final RunaboutSerializer customSerializerFinal = resolveService(customSerializer, RunaboutSerializer.class)
-                .orElse(null);;
+                .orElse(null);
 
         final RunaboutListener listenerFinal = resolveService(listener, RunaboutListener.class)
                 .orElse(null);
 
-        return new RunaboutServiceImpl(projectName, runaboutApiFinal, methodResolverFinal, listenerFinal,
-                customSerializerFinal, jsonFactory);
+        return new RunaboutServiceImpl(projectName,
+                runaboutApiFinal,
+                methodResolverFinal,
+                listenerFinal,
+                customSerializerFinal);
     }
 
     private static <T> Optional<T> resolveService(final T input, final Class<T> service) {
