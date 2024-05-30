@@ -1,6 +1,7 @@
 package dev.runabout.fixtures;
 
-import dev.runabout.RunaboutAPIConfig;
+import dev.runabout.MethodResolverBuilder;
+import dev.runabout.RunaboutApiBuilder;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
 
@@ -13,8 +14,9 @@ public class Logger {
 
     private final PrintWriter printWriter;
 
-    final RunaboutService runaboutService = new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
-            .setCallerClassBlacklist(Set.of(Logger.class))
+    final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+            .setRunaboutApi(new RunaboutApiBuilder(null).build())
+            .setMethodResolver(new MethodResolverBuilder().setCallerClassBlacklist(Set.of(Logger.class)).build())
             .build();
 
     public Logger(OutputStream outputStream) {

@@ -19,8 +19,10 @@ public interface RunaboutService {
      * @return The default implementation of RunaboutService.
      */
     static RunaboutService getService(final String projectName, final String apiToken) {
-        final RunaboutAPIConfig apiConfig = new RunaboutAPIConfig(() -> apiToken);
-        return new RunaboutServiceBuilder(projectName, apiConfig).build();
+        final RunaboutApi runaboutApi = new RunaboutApiBuilder(() -> apiToken).build();
+        return new RunaboutServiceBuilder(projectName)
+                .setRunaboutApi(runaboutApi)
+                .build();
     }
 
     /**
@@ -68,5 +70,5 @@ public interface RunaboutService {
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
      * @param objects    Objects to convert to Runabout instances for the scenario.
      */
-     void sendScenario(final String eventId, final JsonObject properties, final Object... objects);
+     void saveScenario(final String eventId, final JsonObject properties, final Object... objects);
 }

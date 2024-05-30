@@ -89,7 +89,7 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     @Override
-    public void sendScenario(String eventId, JsonObject properties, Object... objects) {
+    public void saveScenario(String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(eventId, properties, objects);
         runaboutApi.ingestScenario(scenario.toJsonObject(jsonFactory));
     }

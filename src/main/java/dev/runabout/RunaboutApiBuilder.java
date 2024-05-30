@@ -2,7 +2,7 @@ package dev.runabout;
 
 import java.util.function.Supplier;
 
-public class RunaboutAPIConfig {
+public class RunaboutApiBuilder {
 
     private int    threads;
     private int    queueSize;
@@ -15,7 +15,7 @@ public class RunaboutAPIConfig {
      * Constructor for RunaboutAPIBuilder. TODO
      * @param apiTokenSupplier
      */
-    public RunaboutAPIConfig(final Supplier<String> apiTokenSupplier) {
+    public RunaboutApiBuilder(final Supplier<String> apiTokenSupplier) {
         threads = 1;
         queueSize = 1_000;
         timeout = 30_000;
@@ -33,7 +33,7 @@ public class RunaboutAPIConfig {
      * @param timeout long timeout in milliseconds.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutAPIConfig setTimeout(long timeout) {
+    public RunaboutApiBuilder setTimeout(long timeout) {
         this.timeout = timeout;
         return this;
     }
@@ -47,7 +47,7 @@ public class RunaboutAPIConfig {
      * @param queueSize
      * @return
      */
-    public RunaboutAPIConfig setQueueSize(int queueSize) {
+    public RunaboutApiBuilder setQueueSize(int queueSize) {
         this.queueSize = queueSize;
         return this;
     }
@@ -62,7 +62,7 @@ public class RunaboutAPIConfig {
      * @param threads integer total number of threads.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutAPIConfig setThreads(int threads) {
+    public RunaboutApiBuilder setThreads(int threads) {
         this.threads = threads;
         return this;
     }
@@ -77,12 +77,16 @@ public class RunaboutAPIConfig {
      * @param ingestURL String url to make requests to.
      * @return The RunaboutEmitterBuilder instance.
      */
-    public RunaboutAPIConfig setIngestURL(String ingestURL) {
+    public RunaboutApiBuilder setIngestURL(String ingestURL) {
         this.ingestURL = ingestURL;
         return this;
     }
 
     public Supplier<String> getApiTokenSupplier() {
         return apiTokenSupplier;
+    }
+
+    public RunaboutApi build() {
+        return new RunaboutApiImpl(this);
     }
 }

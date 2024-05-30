@@ -1,7 +1,7 @@
 package dev.runabout.packagetests;
 
 import dev.runabout.JsonObject;
-import dev.runabout.RunaboutAPIConfig;
+import dev.runabout.RunaboutApiBuilder;
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
@@ -116,8 +116,9 @@ public class RunaboutServiceImplTests {
     @Test
     void testInstanceSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService runaboutService = new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
-                .setThrowableConsumer(thrown::add)
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+                .setRunaboutApi(new RunaboutApiBuilder(null).build())
+                .setListener(thrown::add)
                 .build();
         final ThrowsClass1 throwsInstance = new ThrowsClass1("george", "washington");
         final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance).toJsonObject();
@@ -132,8 +133,9 @@ public class RunaboutServiceImplTests {
     @Test
     void testGenericSerializerThrows() {
         final List<Throwable> thrown = new ArrayList<>();
-        final RunaboutService runaboutService = new RunaboutServiceBuilder("test", new RunaboutAPIConfig(null))
-                .setThrowableConsumer(thrown::add)
+        final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+                .setRunaboutApi(new RunaboutApiBuilder(null).build())
+                .setListener(thrown::add)
                 .build();
         final ThrowsClass2 throwsInstance = new ThrowsClass2("george", "washington");
         final JsonObject jsonObject = runaboutService.createScenario(null, null, throwsInstance).toJsonObject();

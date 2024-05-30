@@ -17,7 +17,6 @@ public final class RunaboutScenario {
     private final JsonObject properties;
     private final Collection<RunaboutInstance> instances;
 
-
     public RunaboutScenario(String method, String eventId, @Nullable String project, Timestamp datetime,
                             @Nullable JsonObject properties, Collection<RunaboutInstance> instances) {
         this.method = method;

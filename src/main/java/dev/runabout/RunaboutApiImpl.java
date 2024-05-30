@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-class RunaboutApiImpl {
+class RunaboutApiImpl implements RunaboutApi {
     private final long timeout;
     private final URI ingestURI;
     private final Supplier<String> apiTokenSupplier;
@@ -28,7 +28,7 @@ class RunaboutApiImpl {
     private final RunaboutListener listener;
     private final BlockingQueue<JsonObject> eventQueue;
 
-    RunaboutApiImpl(final RunaboutAPIConfig builder, @Nullable final RunaboutListener listener) {
+    RunaboutApiImpl(final RunaboutApiBuilder builder) {
         this.apiTokenSupplier = builder.getApiTokenSupplier();
         this.ingestURI = toURI(builder.getIngestURL());
         this.timeout = builder.getTimeout();
@@ -39,7 +39,7 @@ class RunaboutApiImpl {
         this.requestBuilder = HttpRequest.newBuilder()
                 .header("Content-Type", "application/json")
                 .uri(ingestURI);
-        this.listener = listener;
+        this.listener = null; // TODO
     }
 
     public void ingestScenario(final JsonObject object) {
@@ -64,7 +64,7 @@ class RunaboutApiImpl {
                 .thenAccept(code -> {
                     if (code < 200 || code >= 300) {
                         Optional.ofNullable(listener)
-                                .ifPresent(l -> l.onAPIError(code, "TODO"));
+                                .ifPresent(l -> l.onError(new RunaboutException("API error: " + code)));// TODO
                     }
                 });
 
@@ -76,8 +76,8 @@ class RunaboutApiImpl {
 
     private static URI toURI(final String url) {
         try {
-            return new URL(url).toURI();
-        } catch (MalformedURLException | URISyntaxException e) {
+            return new URI(url);
+        } catch (URISyntaxException e) {
             throw new RunaboutException("Invalid runabout ingest URL", e);
         }
     }
