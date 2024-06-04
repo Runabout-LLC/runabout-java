@@ -102,7 +102,8 @@ public class RunaboutApiBuilder {
     }
 
     /**
-     * Set a listener to get a callback about errors.
+     * Sets the listener to invoke on errors.
+     *
      * @param listener RunaboutListener instance.
      * @return The RunaboutApiBuilder instance.
      */

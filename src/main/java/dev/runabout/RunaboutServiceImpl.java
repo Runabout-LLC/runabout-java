@@ -115,6 +115,7 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     // TODO attempt to use super?
+    // TODO simplify algorithm so it relies entirely on annotations
     @Nullable
     private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
 

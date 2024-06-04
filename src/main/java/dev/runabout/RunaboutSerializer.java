@@ -12,7 +12,9 @@ import java.util.ServiceLoader;
  * The implementation should return null if the serializer cannot create a valid RunaboutInput for the given object.
  * For common types, consumers of the API can rely on the default serializer.
  * See {@link DefaultSerializer} for details on which types are serialized out of the box.
- * The implementation should be registered as a service in the META-INF/services/dev.runabout.RunaboutSerializer file. TODO update
+ * The implementation should be added to the {@link RunaboutService} via
+ * {@link RunaboutServiceBuilder#setCustomSerializer(RunaboutSerializer)} or
+ * registered as a service in the META-INF/services/dev.runabout.RunaboutSerializer file.
  */
 @FunctionalInterface
 public interface RunaboutSerializer {

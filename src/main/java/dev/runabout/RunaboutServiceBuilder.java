@@ -66,7 +66,12 @@ public class RunaboutServiceBuilder {
         return this;
     }
 
-    // TODO
+    /**
+     * Sets the listener to invoke on errors.
+     *
+     * @param listener RunaboutListener instance.
+     * @return The RunaboutServiceBuilder instance.
+     */
     public RunaboutServiceBuilder setListener(final RunaboutListener listener) {
         this.listener = listener;
         return this;
