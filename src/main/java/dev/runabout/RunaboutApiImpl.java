@@ -10,11 +10,8 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 class RunaboutApiImpl implements RunaboutApi {
@@ -24,30 +21,29 @@ class RunaboutApiImpl implements RunaboutApi {
 
     private final long timeout;
     private final HttpClient httpClient;
-    private final Supplier<String> apiTokenSupplier;
-    private final ExecutorService executorService;
+    private final Supplier<String> tokenSupplier;
+    private final Executor executor;
     private final HttpRequest.Builder requestBuilder;
-    private final BlockingQueue<RunaboutScenario> scenarioQueue;
+    private final Queue<RunaboutScenario> queue;
 
     RunaboutApiImpl(final RunaboutApiBuilder builder) {
         this.listener = builder.getListener();
         this.timeout = builder.getTimeout();
-        this.apiTokenSupplier = builder.getApiTokenSupplier();
-        this.executorService = Executors.newFixedThreadPool(builder.getThreads());
-        this.scenarioQueue = new ArrayBlockingQueue<>(builder.getQueueSize());
+        this.tokenSupplier = builder.getTokenSupplier();
+        this.executor = builder.getExecutor();
+        this.queue = builder.getQueue();
         this.httpClient = HttpClient.newBuilder().build();
-        final URI ingestURI = toURI(builder.getUrl());
         this.requestBuilder = HttpRequest.newBuilder()
                 .header("Content-Type", "application/json")
-                .uri(ingestURI);
+                .uri(builder.getUri());
     }
 
     public void ingestScenario(final RunaboutScenario scenario) {
         Objects.requireNonNull(scenario.getMethod(), "Scenario cannot be null");
-        if (!scenarioQueue.offer(scenario)) {
+        if (!queue.offer(scenario)) {
             onError(new RunaboutException("Runabout scenario queue is full"));
         }
-        executorService.execute(new Worker());
+        executor.execute(new Worker());
     }
 
     /**
@@ -57,7 +53,7 @@ class RunaboutApiImpl implements RunaboutApi {
      */
     private void ingestScenario(final String contents) {
         final HttpRequest request = requestBuilder
-                .setHeader("Authorization", "Bearer " + apiTokenSupplier.get())
+                .setHeader("Authorization", "Bearer " + tokenSupplier.get())
                 .POST(HttpRequest.BodyPublishers.ofString(contents))
                 .build();
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.discarding())
@@ -91,16 +87,12 @@ class RunaboutApiImpl implements RunaboutApi {
 
         @Override
         public void run() {
-            try {
-                final RunaboutScenario scenario = scenarioQueue.poll(timeout, TimeUnit.MILLISECONDS);
-                if (scenario != null) {
-                    final JsonObject request = new JsonObjectImpl();
-                    final JsonObject scenarioJson = scenario.toJsonObject();
-                    request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(scenarioJson));
-                    ingestScenario(request.toJson());
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            final RunaboutScenario scenario = queue.poll();
+            if (scenario != null) {
+                final JsonObject request = new JsonObjectImpl();
+                final JsonObject scenarioJson = scenario.toJsonObject();
+                request.put(RunaboutConstants.SCENARIOS_KEY, JsonObject.class, List.of(scenarioJson));
+                ingestScenario(request.toJson());
             }
         }
     }

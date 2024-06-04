@@ -3,7 +3,7 @@ package dev.runabout;
 import java.util.Set;
 
 /**
- * Interface representing an input for a Runabout scenario.
+ * Interface representing a single object as an input for a Runabout scenario.
  * The Runabout IDE plugin uses String snippets of java expressions to run methods directly.
  * A Runabout input consists of an eval String and a set of dependencies. The eval String is a java expression
  * which evaluates to an object. The dependencies are the fully qualified class names of all classes used in

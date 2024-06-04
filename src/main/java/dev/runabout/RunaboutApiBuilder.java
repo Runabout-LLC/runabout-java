@@ -1,5 +1,12 @@
 package dev.runabout;
 
+import java.net.URI;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 /**
@@ -8,24 +15,26 @@ import java.util.function.Supplier;
  */
 public class RunaboutApiBuilder {
 
-    private int    threads;
-    private int    queueSize;
-    private long   timeout;
-    private String url;
+    private URI uri;
+    private long timeout;
+    private Executor executor;
     private RunaboutListener listener;
+    private Queue<RunaboutScenario> queue;
 
-    private final Supplier<String> apiTokenSupplier;
+    private final Supplier<String> tokenSupplier;
 
     /**
-     * Constructor for RunaboutAPIBuilder. TODO
-     * @param apiTokenSupplier
+     * Constructor for RunaboutAPIBuilder. The only required parameter is the apiTokenSupplier, which
+     * should supply an organization's API token. To get an API token, visit
+     * <a href="https://runabout.dev">runabout.dev</a>.
+     *
+     * @param tokenSupplier Supplier of an organization's API token.
      */
-    public RunaboutApiBuilder(final Supplier<String> apiTokenSupplier) {
-        threads = 1;
-        queueSize = 1_000;
+    public RunaboutApiBuilder(final Supplier<String> tokenSupplier) {
+        uri = URI.create(RunaboutConstants.INGEST_SCENARIOS_URL);
         timeout = 30_000;
-        url = RunaboutConstants.INGEST_SCENARIOS_URL;
-        this.apiTokenSupplier = apiTokenSupplier;
+        queue = new ArrayBlockingQueue<>(1000);
+        this.tokenSupplier = tokenSupplier;
     }
 
     public long getTimeout() {
@@ -43,54 +52,54 @@ public class RunaboutApiBuilder {
         return this;
     }
 
-    public int getQueueSize() {
-        return queueSize;
+    public Executor getExecutor() {
+        return executor;
     }
 
     /**
-     * TODO
-     * @param queueSize
-     * @return
+     * Set the executor used to make requests. Default is a fixed thread pool with a single thread.
+     *
+     * @param executor Executor service to use.
+     * @return The RunaboutApiBuilder instance.
      */
-    public RunaboutApiBuilder setQueueSize(int queueSize) {
-        this.queueSize = queueSize;
+    public RunaboutApiBuilder setExecutor(Executor executor) {
+        this.executor = Objects.requireNonNull(executor, "Executor cannot be null");
         return this;
     }
 
-    public int getThreads() {
-        return threads;
+    public Queue<RunaboutScenario> getQueue() {
+        return queue;
     }
 
     /**
-     * Set the maximum number of threads in the thread pool to consume and emit events.
+     * Set the queue implementation used to hand off scenarios to the executor service, which will make the requests.
      *
-     * @param threads integer total number of threads.
+     * @param queue Queue implementation to use.
      * @return The RunaboutApiBuilder instance.
      */
-    public RunaboutApiBuilder setThreads(int threads) {
-        this.threads = threads;
+    public RunaboutApiBuilder setQueue(Queue<RunaboutScenario> queue) {
+        this.queue = Objects.requireNonNull(queue, "Queue size cannot be null");
         return this;
     }
 
-    public String getUrl() {
-        return url;
+    public URI getUri() {
+        return uri;
     }
 
     /**
-     * Sets the url to post events to.
+     * Sets the URI to post scenarios to.
      *
-     * @param url String url to make requests to.
+     * @param uri URI to make requests to.
      * @return The RunaboutApiBuilder instance.
      */
-    public RunaboutApiBuilder setUrl(String url) {
-        this.url = url;
+    public RunaboutApiBuilder setUri(URI uri) {
+        this.uri = uri;
         return this;
     }
 
     public RunaboutListener getListener() {
         return listener;
     }
-
 
     /**
      * Set a listener to get a callback about errors.
@@ -102,11 +111,12 @@ public class RunaboutApiBuilder {
         return this;
     }
 
-    public Supplier<String> getApiTokenSupplier() {
-        return apiTokenSupplier;
+    public Supplier<String> getTokenSupplier() {
+        return tokenSupplier;
     }
 
     public RunaboutApi build() {
+        this.executor = Optional.ofNullable(this.executor).orElseGet(() -> Executors.newFixedThreadPool(1));
         return new RunaboutApiImpl(this);
     }
 }

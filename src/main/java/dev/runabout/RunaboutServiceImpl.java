@@ -1,5 +1,6 @@
 package dev.runabout;
 
+import dev.runabout.annotations.Nullable;
 import dev.runabout.annotations.RunaboutEnabled;
 import dev.runabout.annotations.RunaboutParameter;
 import dev.runabout.annotations.ToRunabout;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 class RunaboutServiceImpl implements RunaboutService {
@@ -98,9 +98,27 @@ class RunaboutServiceImpl implements RunaboutService {
         //
         // Try RunaboutEnabled annotated constructors
         //
+        RunaboutInput input = invokeRunaboutEnabledSerializer(object, clazz);
+
+        //
+        // Try ToRunabout annotated methods.
+        //
+        if (input == null) {
+            input = invokeInstanceToRunaboutSerializer(object, clazz);
+            while (input == null && clazz.getSuperclass() != null) {
+                clazz = clazz.getSuperclass();
+                input = invokeInstanceToRunaboutSerializer(object, clazz);
+            }
+        }
+
+        return input;
+    }
+
+    // TODO attempt to use super?
+    @Nullable
+    private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
 
         RunaboutInput input = null;
-
         final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
                 .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
                 .findFirst().orElse(null);
@@ -179,22 +197,11 @@ class RunaboutServiceImpl implements RunaboutService {
                 input = RunaboutInput.of(eval.toString(), dependencies);
             }
         }
-
-        //
-        // Try ToRunabout annotated methods.
-        //
-        if (input == null) {
-            input = invokeInstanceSerializer(object, clazz);
-            while (input == null && clazz.getSuperclass() != null) {
-                clazz = clazz.getSuperclass();
-                input = invokeInstanceSerializer(object, clazz);
-            }
-        }
-
         return input;
     }
 
-    private RunaboutInput invokeInstanceSerializer(final Object object, final Class<?> clazz) {
+    @Nullable
+    private RunaboutInput invokeInstanceToRunaboutSerializer(final Object object, final Class<?> clazz) {
 
         final Set<Method> methods = Optional.ofNullable(clazz).map(cls -> {
             final Set<Method> set = new HashSet<>(Set.of(cls.getMethods()));

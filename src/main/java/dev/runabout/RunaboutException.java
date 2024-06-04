@@ -1,6 +1,8 @@
 package dev.runabout;
 
-// TODO
+/**
+ * Base runabout exception class.
+ */
 public class RunaboutException extends RuntimeException {
 
     public RunaboutException(String message) {
