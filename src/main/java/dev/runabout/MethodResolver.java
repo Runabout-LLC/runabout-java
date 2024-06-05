@@ -1,10 +1,7 @@
 package dev.runabout;
 
-import dev.runabout.utils.RunaboutUtils;
-
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * Runabout interface for determining the caller method when using the {@link RunaboutService}.

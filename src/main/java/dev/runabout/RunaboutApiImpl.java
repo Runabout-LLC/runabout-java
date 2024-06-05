@@ -2,8 +2,6 @@ package dev.runabout;
 
 import dev.runabout.annotations.Nullable;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -73,14 +71,6 @@ class RunaboutApiImpl implements RunaboutApi {
 
     private void onError(final Throwable t) {
         Optional.ofNullable(listener).ifPresent(l -> l.onError(t));
-    }
-
-    private static URI toURI(final String url) {
-        try {
-            return new URI(url);
-        } catch (URISyntaxException e) {
-            throw new RunaboutException("Invalid runabout ingest URL", e);
-        }
     }
 
     private class Worker implements Runnable {

@@ -2,8 +2,6 @@ package dev.runabout;
 
 import dev.runabout.annotations.ToRunabout;
 
-import java.util.ServiceLoader;
-
 /**
  * Generic serializer interface for Runabout.
  * This interface should be implemented once per project, and the implementation should be a catch-all

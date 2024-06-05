@@ -16,7 +16,7 @@ public class MethodResolverImplTests {
         new CallerClass().callLambda(callerSupplier, method);
         Assertions.assertNotNull(method.get());
         final String signature = method.get().toString();
-        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callLambda(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callLambda(dev.runabout.MethodResolver,java.util.concurrent.atomic.AtomicReference)",
                 signature);
     }
 
@@ -27,7 +27,7 @@ public class MethodResolverImplTests {
         new CallerClass().callAnonymous(callerSupplier, method);
         Assertions.assertNotNull(method.get());
         final String signature = method.get().toString();
-        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callAnonymous(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callAnonymous(dev.runabout.MethodResolver,java.util.concurrent.atomic.AtomicReference)",
                 signature);
     }
 }

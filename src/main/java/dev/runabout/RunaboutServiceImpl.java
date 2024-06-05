@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 class RunaboutServiceImpl implements RunaboutService {
 
@@ -104,18 +104,16 @@ class RunaboutServiceImpl implements RunaboutService {
         // Try ToRunabout annotated methods.
         //
         if (input == null) {
-            input = invokeInstanceToRunaboutSerializer(object, clazz);
+            input = invokeToRunaboutSerializer(object, clazz);
             while (input == null && clazz.getSuperclass() != null) {
                 clazz = clazz.getSuperclass();
-                input = invokeInstanceToRunaboutSerializer(object, clazz);
+                input = invokeToRunaboutSerializer(object, clazz);
             }
         }
 
         return input;
     }
 
-    // TODO attempt to use super?
-    // TODO simplify algorithm so it relies entirely on annotations
     @Nullable
     private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
 
@@ -126,65 +124,41 @@ class RunaboutServiceImpl implements RunaboutService {
 
         if (constructor != null) {
 
-            class ParameterField {
-                private final String name;
-                private final Class<?> type;
-
-                public ParameterField(String name, Class<?> type) {
-                    this.name = name;
-                    this.type = type;
+            final Map<String, List<Integer>> parameterMap = new HashMap<>();
+            for (int i = 0; i < constructor.getParameters().length; i++) {
+                final Parameter parameter = constructor.getParameters()[i];
+                if (!parameter.isAnnotationPresent(RunaboutParameter.class)) {
+                    throw new RuntimeException("RunaboutEnabled constructor parameters must be annotated with RunaboutParameter"); // TODO
                 }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ParameterField that = (ParameterField) object;
-                    return Objects.equals(name, that.name) && Objects.equals(type, that.type);// TODO make type equality more nuanced
-                }
-
-                @Override
-                public int hashCode() {
-                    return Objects.hash(name);
-                }
+                parameterMap
+                        .computeIfAbsent(parameter.getAnnotation(RunaboutParameter.class).value(), v -> new ArrayList<>())
+                        .add(i);
             }
 
-            final List<ParameterField> parameterFields = Arrays.stream(constructor.getParameters())
-                    .map(parameter -> new ParameterField(parameter.isAnnotationPresent(RunaboutEnabled.class) ?
-                            parameter.getAnnotation(RunaboutParameter.class).value() : parameter.getName(), parameter.getType()))
-                    .collect(Collectors.toList());
+            final List<Field> fields = new ArrayList<>(parameterMap.size());
 
-            final Map<ParameterField, Integer> parameterFieldMap = new HashMap<>();
-            for (int i = 0; i < parameterFields.size(); i++) {
-                parameterFieldMap.put(parameterFields.get(i), i);
-            }
-
-            final List<Field> fields = new ArrayList<>(parameterFields.size());
             Arrays.stream(clazz.getDeclaredFields())
-                    .takeWhile(f -> !parameterFieldMap.isEmpty())
+                    .takeWhile(f -> !parameterMap.isEmpty())
                     .forEach(f -> {
-                        final ParameterField pf = new ParameterField(f.getName(), f.getType());
-                        final Integer index = parameterFieldMap.remove(pf);
-                        if (index != null) {
-                            fields.add(index, f);
+                        final List<Integer> indices = parameterMap.remove(f.getName());
+                        if (indices != null) {
+                            indices.forEach(index -> fields.add(index, f));
                         }
                     });
 
-            //
-            // VALIDATION TODO COMMENT
-            //
-            if (parameterFieldMap.isEmpty()) {
+            if (parameterMap.isEmpty()) {
+
                 final StringBuilder eval = new StringBuilder("new ").append(clazz.getSimpleName()).append("(");
                 final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
 
                 for (Field field : fields) {
 
                     Object value;
-                    field.setAccessible(true); // Safe because Class.getFields always returns a new copy of the fields.
+                    field.setAccessible(true);
                     try {
                         value = field.get(object);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException(e); // TODO
                     }
 
                     RunaboutInput fieldInput = serialize(value);
@@ -198,11 +172,12 @@ class RunaboutServiceImpl implements RunaboutService {
                 input = RunaboutInput.of(eval.toString(), dependencies);
             }
         }
+
         return input;
     }
 
     @Nullable
-    private RunaboutInput invokeInstanceToRunaboutSerializer(final Object object, final Class<?> clazz) {
+    private RunaboutInput invokeToRunaboutSerializer(final Object object, final Class<?> clazz) {
 
         final Set<Method> methods = Optional.ofNullable(clazz).map(cls -> {
             final Set<Method> set = new HashSet<>(Set.of(cls.getMethods()));

@@ -32,18 +32,23 @@ class MethodResolverImpl implements MethodResolver {
         final AtomicBoolean failed = new AtomicBoolean(false);
         final AtomicReference<Method> method = new AtomicReference<>();
 
-        StackWalker.getInstance(options).forEach(stackFrame -> {
-            if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
-                    !isAnonymousCaller(stackFrame) &&
-                    stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
-                    stackFramePredicate.test(stackFrame)) {
-                try {
-                    method.set(getMethodFromStackFrame(stackFrame));
-                } catch (NoSuchMethodException | SecurityException | NullPointerException e) {
-                    failed.set(true);
+        try {
+            StackWalker.getInstance(options).forEach(stackFrame -> {
+                if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
+                        !isAnonymousCaller(stackFrame) &&
+                        stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
+                        stackFramePredicate.test(stackFrame)) {
+                    try {
+                        method.set(getMethodFromStackFrame(stackFrame));
+                        throw new ExitStackWalkerException();
+                    } catch (NoSuchMethodException | SecurityException | NullPointerException e) {
+                        failed.set(true);
+                    }
                 }
-            }
-        });
+            });
+        } catch (ExitStackWalkerException e) {
+            // Do nothing, this is expected.
+        }
 
         return method.get();
     }
@@ -64,5 +69,13 @@ class MethodResolverImpl implements MethodResolver {
         final MethodType methodType = Objects.requireNonNull(stackFrame.getMethodType());
         final Class<?>[] parameterTypes = Objects.requireNonNull(methodType.parameterArray());
         return clazz.getDeclaredMethod(methodName, parameterTypes);
+    }
+
+    /**
+     * Marker exception used to break out of the forEach loop in the StackWalker once
+     * we have found the stack frame we need.
+     */
+    private static class ExitStackWalkerException extends RuntimeException {
+
     }
 }
