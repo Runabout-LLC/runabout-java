@@ -128,7 +128,9 @@ class RunaboutServiceImpl implements RunaboutService {
                 for (int i = 0; i < constructor.getParameters().length; i++) {
                     final Parameter parameter = constructor.getParameters()[i];
                     if (!parameter.isAnnotationPresent(RunaboutParameter.class)) {
-                        throw new RuntimeException("RunaboutEnabled constructor parameters must be annotated with RunaboutParameter"); // TODO
+                        throw new RuntimeException("RunaboutEnabled constructor parameters must be " +
+                                "annotated with RunaboutParameter. Parameter: [" + parameter.getName() +
+                                "] in class: [" + clazz.getCanonicalName() + "] is not annotated.");
                     }
                     parameterMap
                             .computeIfAbsent(parameter.getAnnotation(RunaboutParameter.class).value(),
