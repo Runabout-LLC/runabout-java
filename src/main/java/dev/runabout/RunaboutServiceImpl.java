@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 
 class RunaboutServiceImpl implements RunaboutService {
 
@@ -115,64 +116,65 @@ class RunaboutServiceImpl implements RunaboutService {
 
     @Nullable
     private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
+        try {
+            RunaboutInput input = null;
+            final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
+                    .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
+                    .findFirst().orElse(null);
 
-        RunaboutInput input = null;
-        final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
-                .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
-                .findFirst().orElse(null);
+            if (constructor != null) {
 
-        if (constructor != null) {
-
-            final Map<String, List<Integer>> parameterMap = new HashMap<>();
-            for (int i = 0; i < constructor.getParameters().length; i++) {
-                final Parameter parameter = constructor.getParameters()[i];
-                if (!parameter.isAnnotationPresent(RunaboutParameter.class)) {
-                    throw new RuntimeException("RunaboutEnabled constructor parameters must be annotated with RunaboutParameter"); // TODO
+                final Map<String, List<Integer>> parameterMap = new HashMap<>();
+                for (int i = 0; i < constructor.getParameters().length; i++) {
+                    final Parameter parameter = constructor.getParameters()[i];
+                    if (!parameter.isAnnotationPresent(RunaboutParameter.class)) {
+                        throw new RuntimeException("RunaboutEnabled constructor parameters must be annotated with RunaboutParameter"); // TODO
+                    }
+                    parameterMap
+                            .computeIfAbsent(parameter.getAnnotation(RunaboutParameter.class).value(),
+                                    v -> new ArrayList<>())
+                            .add(i);
                 }
-                parameterMap
-                        .computeIfAbsent(parameter.getAnnotation(RunaboutParameter.class).value(), v -> new ArrayList<>())
-                        .add(i);
-            }
 
-            final List<Field> fields = new ArrayList<>(parameterMap.size());
+                final List<Field> fields = new ArrayList<>(parameterMap.size());
 
-            Arrays.stream(clazz.getDeclaredFields())
-                    .takeWhile(f -> !parameterMap.isEmpty())
-                    .forEach(f -> {
-                        final List<Integer> indices = parameterMap.remove(f.getName());
-                        if (indices != null) {
-                            indices.forEach(index -> fields.add(index, f));
-                        }
-                    });
+                Arrays.stream(clazz.getDeclaredFields())
+                        .takeWhile(f -> !parameterMap.isEmpty())
+                        .forEach(f -> {
+                            final List<Integer> indices = parameterMap.remove(f.getName());
+                            if (indices != null) {
+                                indices.forEach(index -> fields.add(index, f));
+                            }
+                        });
 
-            if (parameterMap.isEmpty()) {
+                if (parameterMap.isEmpty()) {
 
-                final StringBuilder eval = new StringBuilder("new ").append(clazz.getSimpleName()).append("(");
-                final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
+                    final StringJoiner joiner = new StringJoiner(", ");
+                    final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
 
-                for (Field field : fields) {
+                    for (Field field : fields) {
 
-                    Object value;
-                    field.setAccessible(true);
-                    try {
+                        Object value;
+                        field.setAccessible(true);
                         value = field.get(object);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e); // TODO
+                        RunaboutInput fieldInput = serialize(value);
+                        if (fieldInput == null || fieldInput.getEval() == null || fieldInput.getEval().isEmpty()) {
+                            fieldInput = DefaultSerializer.getNullInput();
+                        }
+                        joiner.add(fieldInput.getEval());
+                        dependencies.addAll(fieldInput.getDependencies());
                     }
 
-                    RunaboutInput fieldInput = serialize(value);
-                    if (fieldInput == null || fieldInput.getEval() == null || fieldInput.getEval().isEmpty()) {
-                        fieldInput = DefaultSerializer.getNullInput();
-                    }
-                    eval.append(fieldInput.getEval()).append(", ");
-                    dependencies.addAll(fieldInput.getDependencies());
+                    final String eval = "new " + clazz.getSimpleName() + "(" + joiner + ")";
+                    input = RunaboutInput.of(eval, dependencies);
                 }
-
-                input = RunaboutInput.of(eval.toString(), dependencies);
             }
-        }
 
-        return input;
+            return input;
+        } catch (Throwable t) {
+            listener.onError(t);
+            return null;
+        }
     }
 
     @Nullable
