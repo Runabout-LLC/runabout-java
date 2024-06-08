@@ -1,5 +1,7 @@
 package dev.runabout.fixtures;
 
+import dev.runabout.MethodResolverBuilder;
+import dev.runabout.RunaboutApiBuilder;
 import dev.runabout.RunaboutService;
 import dev.runabout.RunaboutServiceBuilder;
 
@@ -12,9 +14,9 @@ public class Logger {
 
     private final PrintWriter printWriter;
 
-    final RunaboutService<?> runaboutService = RunaboutServiceBuilder
-            .getDefaultBuilder()
-            .setCallerClassBlacklist(Set.of(Logger.class))
+    final RunaboutService runaboutService = new RunaboutServiceBuilder("test")
+            .setRunaboutApi(new RunaboutApiBuilder(null).build())
+            .setMethodResolver(new MethodResolverBuilder().setCallerClassBlacklist(Set.of(Logger.class)).build())
             .build();
 
     public Logger(OutputStream outputStream) {
@@ -22,7 +24,8 @@ public class Logger {
     }
 
     public void runaboutInfo(final Object... objects) {
-        info(() -> runaboutService.toRunaboutString(objects));
+//        runaboutService.sendScenario(event, properties, objects);
+        info(() -> runaboutService.createScenario(null, null, objects).toJsonObject().toJson());
     }
 
     public void info(final Supplier<String> supplier) {

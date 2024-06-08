@@ -2,7 +2,7 @@ package dev.runabout.fixtures;
 
 import dev.runabout.RunaboutInput;
 import dev.runabout.RunaboutService;
-import dev.runabout.ToRunabout;
+import dev.runabout.annotations.ToRunabout;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,7 +31,7 @@ public abstract class AbstractClass1 {
 
     @ToRunabout
     private RunaboutInput toRunabout() {
-        final RunaboutService<?> runaboutService = RunaboutService.getService();
+        final RunaboutService runaboutService = RunaboutService.getService("test", null);
         final RunaboutInput nameInput = runaboutService.serialize(name);
         final RunaboutInput keysInput = runaboutService.serialize(keys);
         final String className = this.getClass().getSimpleName();

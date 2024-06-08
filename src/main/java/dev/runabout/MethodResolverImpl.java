@@ -7,9 +7,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
-class DefaultCallerSupplier implements Supplier<Method> {
+class MethodResolverImpl implements MethodResolver {
 
     private static final Set<StackWalker.Option> options = Set.of(
             StackWalker.Option.RETAIN_CLASS_REFERENCE,
@@ -19,35 +18,39 @@ class DefaultCallerSupplier implements Supplier<Method> {
 
     private final Predicate<StackWalker.StackFrame> stackFramePredicate;
 
-    DefaultCallerSupplier(final Predicate<StackWalker.StackFrame> stackFramePredicate) {
+    MethodResolverImpl() {
+        this(stackFrame -> true);
+    }
+
+    MethodResolverImpl(final Predicate<StackWalker.StackFrame> stackFramePredicate) {
         this.stackFramePredicate = stackFramePredicate;
     }
 
     @Override
-    public Method get() {
+    public Method getMethod() {
 
         final AtomicBoolean failed = new AtomicBoolean(false);
         final AtomicReference<Method> method = new AtomicReference<>();
 
-        StackWalker.getInstance(options).forEach(stackFrame -> {
-            if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
-                    !isAnonymousCaller(stackFrame) &&
-                    stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
-                    stackFramePredicate.test(stackFrame)) {
-                try {
-                    method.set(getMethodFromStackFrame(stackFrame));
-                } catch (NoSuchMethodException | SecurityException | NullPointerException e) {
-                    failed.set(true);
+        try {
+            StackWalker.getInstance(options).forEach(stackFrame -> {
+                if (method.get() == null && !failed.get() && !isLambdaMethod(stackFrame) &&
+                        !isAnonymousCaller(stackFrame) &&
+                        stackFrame.getDeclaringClass().getPackage() != RunaboutService.class.getPackage() &&
+                        stackFramePredicate.test(stackFrame)) {
+                    try {
+                        method.set(getMethodFromStackFrame(stackFrame));
+                        throw new ExitStackWalkerException();
+                    } catch (NoSuchMethodException | SecurityException | NullPointerException e) {
+                        failed.set(true);
+                    }
                 }
-            }
-        });
+            });
+        } catch (ExitStackWalkerException e) {
+            // Do nothing, this is expected.
+        }
 
         return method.get();
-    }
-
-    public static Predicate<StackWalker.StackFrame> getCallerClassPredicate(final Set<Class<?>> callerClassBlackList) {
-        return stackFrame -> stackFrame != null && stackFrame.getDeclaringClass() != null &&
-                !callerClassBlackList.contains(stackFrame.getDeclaringClass());
     }
 
     private static boolean isLambdaMethod(final StackWalker.StackFrame stackFrame) {
@@ -66,5 +69,13 @@ class DefaultCallerSupplier implements Supplier<Method> {
         final MethodType methodType = Objects.requireNonNull(stackFrame.getMethodType());
         final Class<?>[] parameterTypes = Objects.requireNonNull(methodType.parameterArray());
         return clazz.getDeclaredMethod(methodName, parameterTypes);
+    }
+
+    /**
+     * Marker exception used to break out of the forEach loop in the StackWalker once
+     * we have found the stack frame we need.
+     */
+    private static class ExitStackWalkerException extends RuntimeException {
+
     }
 }

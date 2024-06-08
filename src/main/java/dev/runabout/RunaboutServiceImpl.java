@@ -1,40 +1,48 @@
 package dev.runabout;
 
+import dev.runabout.annotations.Nullable;
+import dev.runabout.annotations.RunaboutEnabled;
+import dev.runabout.annotations.RunaboutParameter;
+import dev.runabout.annotations.ToRunabout;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.StringJoiner;
 
-class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
+class RunaboutServiceImpl implements RunaboutService {
 
-    private final boolean excludeSuper;
-    private final Consumer<Throwable> throwableConsumer;
-    private final Supplier<Method> callerSupplier;
+    private final String projectName;
+    private final RunaboutApi runaboutApi;
+    private final MethodResolver methodResolver;
+    private final RunaboutListener listener;
     private final RunaboutSerializer customSerializer;
-    private final Supplier<T> jsonFactory;
-    private final Supplier<String> datetimeSupplier;
-    private final Function<Method, String> methodToStringFunction;
 
     private final DefaultSerializer defaultSerializer = DefaultSerializer.getInstance();
 
-    RunaboutServiceImpl(boolean excludeSuper, Consumer<Throwable> throwableConsumer, Supplier<Method> callerSupplier,
-                        RunaboutSerializer customSerializer, Supplier<T> jsonFactory,
-                        Supplier<String> datetimeSupplier, Function<Method, String> methodToStringFunction) {
-        this.throwableConsumer = throwableConsumer;
-        this.excludeSuper = excludeSuper;
-        this.callerSupplier = callerSupplier;
+    RunaboutServiceImpl(String projectName,
+                        RunaboutApi runaboutApi,
+                        MethodResolver methodResolver,
+                        RunaboutListener listener,
+                        RunaboutSerializer customSerializer) {
+        this.projectName = projectName;
+        this.methodResolver = methodResolver;
         this.customSerializer = customSerializer;
-        this.jsonFactory = jsonFactory;
-        this.datetimeSupplier = datetimeSupplier;
-        this.methodToStringFunction = methodToStringFunction;
+        this.runaboutApi = runaboutApi;
+        this.listener = listener;
     }
 
     @Override
@@ -61,53 +69,118 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
     }
 
     @Override
-    public Method getCallerMethod() {
-        return callerSupplier.get();
+    public RunaboutScenario createScenario(final String eventId, final JsonObject properties, final Object... objects) {
+
+        final Timestamp datetime = getDatetime();
+        final String method = methodResolver.getSerializedMethod();
+
+        final List<RunaboutInstance> instances = new ArrayList<>();
+        for (final Object object: objects) {
+            final RunaboutInput input = serialize(object);
+            final String type = getTypeSafe(object);
+            final RunaboutInstance instance = RunaboutInstance.of(type, input);
+            instances.add(instance);
+        }
+
+        return new RunaboutScenario(method, eventId, projectName, datetime, properties, instances);
     }
 
     @Override
-    public T toRunaboutJson(Method method, Object... objects) {
-
-        Objects.requireNonNull(method, "RunaboutService unable to determine caller method.");
-
-        final T json = jsonFactory.get();
-
-        // Put version data in json.
-        json.put(RunaboutConstants.VERSION_KEY, RunaboutProperties.getInstance().getJsonContractVersion());
-
-        // Put method data in json.
-        json.put(RunaboutConstants.METHOD_KEY, methodToStringFunction.apply(method));
-
-        // Put datetime data in json.
-        json.put(RunaboutConstants.DATETIME_KEY, datetimeSupplier.get());
-
-        final List<JsonObject> inputs = new ArrayList<>();
-        for (final Object object: objects) {
-            final RunaboutInput input = serialize(object);
-            final T inputJson = jsonFactory.get();
-            final String type = getTypeSafe(object);
-            inputJson.put(RunaboutConstants.TYPE_KEY, type);
-            inputJson.put(RunaboutConstants.EVAL_KEY, input.getEval());
-            inputJson.put(RunaboutConstants.DEPENDENCIES_KEY, String.class, new ArrayList<>(input.getDependencies()));
-            inputs.add(inputJson);
-        }
-
-        json.put(RunaboutConstants.INPUTS_KEY, JsonObject.class, inputs);
-        return json;
+    public void saveScenario(String eventId, JsonObject properties, Object... objects) {
+        final RunaboutScenario scenario = createScenario(eventId, properties, objects);
+        runaboutApi.ingestScenario(scenario);
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {
-        RunaboutInput input;
+
         Class<?> clazz = object.getClass();
-        input = invokeInstanceSerializer(object, clazz);
-        while (!this.excludeSuper & input == null && clazz.getSuperclass() != null) {
-            clazz = clazz.getSuperclass();
-            input = invokeInstanceSerializer(object, clazz);
+
+        //
+        // Try RunaboutEnabled annotated constructors
+        //
+        RunaboutInput input = invokeRunaboutEnabledSerializer(object, clazz);
+
+        //
+        // Try ToRunabout annotated methods.
+        //
+        if (input == null) {
+            input = invokeToRunaboutSerializer(object, clazz);
+            while (input == null && clazz.getSuperclass() != null) {
+                clazz = clazz.getSuperclass();
+                input = invokeToRunaboutSerializer(object, clazz);
+            }
         }
+
         return input;
     }
 
-    private RunaboutInput invokeInstanceSerializer(final Object object, final Class<?> clazz) {
+    @Nullable
+    private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
+        try {
+            RunaboutInput input = null;
+            final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
+                    .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
+                    .findFirst().orElse(null);
+
+            if (constructor != null) {
+
+                final Map<String, List<Integer>> parameterMap = new HashMap<>();
+                for (int i = 0; i < constructor.getParameters().length; i++) {
+                    final Parameter parameter = constructor.getParameters()[i];
+                    if (!parameter.isAnnotationPresent(RunaboutParameter.class)) {
+                        throw new RuntimeException("RunaboutEnabled constructor parameters must be " +
+                                "annotated with RunaboutParameter. Parameter: [" + parameter.getName() +
+                                "] in class: [" + clazz.getCanonicalName() + "] is not annotated.");
+                    }
+                    parameterMap
+                            .computeIfAbsent(parameter.getAnnotation(RunaboutParameter.class).value(),
+                                    v -> new ArrayList<>())
+                            .add(i);
+                }
+
+                final List<Field> fields = new ArrayList<>(parameterMap.size());
+
+                Arrays.stream(clazz.getDeclaredFields())
+                        .takeWhile(f -> !parameterMap.isEmpty())
+                        .forEach(f -> {
+                            final List<Integer> indices = parameterMap.remove(f.getName());
+                            if (indices != null) {
+                                indices.forEach(index -> fields.add(index, f));
+                            }
+                        });
+
+                if (parameterMap.isEmpty()) {
+
+                    final StringJoiner joiner = new StringJoiner(", ");
+                    final Set<String> dependencies = new HashSet<>(Set.of(clazz.getCanonicalName()));
+
+                    for (Field field : fields) {
+
+                        Object value;
+                        field.setAccessible(true);
+                        value = field.get(object);
+                        RunaboutInput fieldInput = serialize(value);
+                        if (fieldInput == null || fieldInput.getEval() == null || fieldInput.getEval().isEmpty()) {
+                            fieldInput = DefaultSerializer.getNullInput();
+                        }
+                        joiner.add(fieldInput.getEval());
+                        dependencies.addAll(fieldInput.getDependencies());
+                    }
+
+                    final String eval = "new " + clazz.getSimpleName() + "(" + joiner + ")";
+                    input = RunaboutInput.of(eval, dependencies);
+                }
+            }
+
+            return input;
+        } catch (Throwable t) {
+            listener.onError(t);
+            return null;
+        }
+    }
+
+    @Nullable
+    private RunaboutInput invokeToRunaboutSerializer(final Object object, final Class<?> clazz) {
 
         final Set<Method> methods = Optional.ofNullable(clazz).map(cls -> {
             final Set<Method> set = new HashSet<>(Set.of(cls.getMethods()));
@@ -134,9 +207,9 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
             }
 
         } catch (InvocationTargetException e) {
-            throwableConsumer.accept(e.getCause() != null ? e.getCause() : e);
+            listener.onError(e.getCause() != null ? e.getCause() : e);
         } catch (Throwable t) {
-            throwableConsumer.accept(t);
+            listener.onError(t);
         }
 
         return input;
@@ -154,7 +227,7 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
                 }
 
             } catch (Throwable ex) {
-                throwableConsumer.accept(ex);
+                listener.onError(ex);
             }
         }
 
@@ -178,5 +251,9 @@ class RunaboutServiceImpl<T extends JsonObject> implements RunaboutService<T> {
                 .map(c -> c.getInterfaces().length > 0 ? c.getInterfaces()[0] : c.getSuperclass())
                 .map(Class::getCanonicalName)
                 .orElse("null");
+    }
+
+    private static Timestamp getDatetime() {
+        return Timestamp.from(Instant.now());
     }
 }

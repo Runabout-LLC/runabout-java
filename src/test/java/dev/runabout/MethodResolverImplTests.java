@@ -7,27 +7,27 @@ import org.junit.jupiter.api.Test;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultCallerSupplierTests {
+public class MethodResolverImplTests {
 
     @Test
     void testIgnoreLambdaMethod() {
-        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(s -> true);
+        final MethodResolverImpl callerSupplier = new MethodResolverImpl(s -> true);
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callLambda(callerSupplier, method);
         Assertions.assertNotNull(method.get());
         final String signature = method.get().toString();
-        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callLambda(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callLambda(dev.runabout.MethodResolver,java.util.concurrent.atomic.AtomicReference)",
                 signature);
     }
 
     @Test
     void testIgnoreAnonymousClass() {
-        final DefaultCallerSupplier callerSupplier = new DefaultCallerSupplier(s -> true);
+        final MethodResolverImpl callerSupplier = new MethodResolverImpl(s -> true);
         final AtomicReference<Method> method = new AtomicReference<>();
         new CallerClass().callAnonymous(callerSupplier, method);
         Assertions.assertNotNull(method.get());
         final String signature = method.get().toString();
-        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callAnonymous(java.util.function.Supplier,java.util.concurrent.atomic.AtomicReference)",
+        Assertions.assertEquals("public void dev.runabout.fixtures.CallerClass.callAnonymous(dev.runabout.MethodResolver,java.util.concurrent.atomic.AtomicReference)",
                 signature);
     }
 }

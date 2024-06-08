@@ -1,78 +1,53 @@
 package dev.runabout;
 
 import java.lang.reflect.Method;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.ServiceLoader;
 
 /**
  * A builder for creating a RunaboutService.
- *
- * @param <T> the type of Json Object to use.
  */
-public class RunaboutServiceBuilder<T extends JsonObject> {
+public class RunaboutServiceBuilder {
 
-    private boolean excludeSuper = false;
-    private Supplier<Method> callerSupplier;
-    private Set<Class<?>> callerClassBlacklist;
+    //
+    // Setter/ServiceLoader fields.
+    //
+    private MethodResolver methodResolver;
     private RunaboutSerializer customSerializer;
-    private Consumer<Throwable> throwableConsumer;
-    private Supplier<String> datetimeSupplier;
-    private Function<Method, String> methodToStringFunction;
-    private Predicate<StackWalker.StackFrame> stackFramePredicate;
+    private RunaboutListener listener;
+    private RunaboutApi runaboutApi;
 
-    private final Supplier<T> jsonFactory;
-
-    /**
-     * Gets the default RunaboutServiceBuilder instance which uses the built-in {@link JsonObject} type.
-     *
-     * @return The default RunaboutServiceBuilder.
-     */
-    public static RunaboutServiceBuilder<JsonObject> getDefaultBuilder() {
-        return  new RunaboutServiceBuilder<>(new JsonObjectImpl.JsonFactoryImpl());
-    }
+    //
+    // Constructor fields.
+    //
+    private final String projectName;
 
     /**
      * Creates a new RunaboutServiceBuilder with the given JSON object factory.
      * The supplier should create new instances of JSON objects.
      *
-     * @param jsonFactory The JSON object factory.
+     * @param projectName The name of the project to log scenario under.
      */
-    public RunaboutServiceBuilder(Supplier<T> jsonFactory) {
-        this.jsonFactory = jsonFactory;
+    public RunaboutServiceBuilder(final String projectName) {
+        this.projectName = Objects.requireNonNull(projectName, "Runabout project name is required.");
+    }
+
+    public RunaboutServiceBuilder setRunaboutApi(final RunaboutApi runaboutApi) {
+        this.runaboutApi = runaboutApi;
+        return this;
     }
 
     /**
      * Sets the caller supplier for the RunaboutService.
      * The supplier should return the desired method for Runabout replay debugging from the stack a runtime.
-     * By default, the {@link RunaboutService} will use {@link DefaultCallerSupplier}.
+     * By default, the {@link RunaboutService} will use {@link MethodResolverImpl}.
      *
-     * @param callerSupplier A supplier that returns the desired {@link Method} to include in the Runabout JSON.
+     * @param methodResolver A supplier that returns the desired {@link Method} to include in the Runabout JSON.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setCallerSupplier(Supplier<Method> callerSupplier) {
-        this.callerSupplier = Objects.requireNonNull(callerSupplier, "Caller supplier cannot be null.");
-        return this;
-    }
-
-    /**
-     * Sets the caller class blacklist for the RunaboutService.
-     * The blacklist is used to filter out classes from the stack trace that should
-     * not be included in the Runabout JSON.
-     * This method is mutually exclusive with {@link #setCallerSupplier(Supplier)}.
-     * By default, the blacklist is empty.
-     *
-     * @param callerClassBlacklist The set of classes to blacklist from the stack trace.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder<T> setCallerClassBlacklist(Set<Class<?>> callerClassBlacklist) {
-        this.callerClassBlacklist = Objects.requireNonNull(callerClassBlacklist,
-                "Caller class blacklist cannot be null.");
+    public RunaboutServiceBuilder setMethodResolver(final MethodResolver methodResolver) {
+        this.methodResolver = Objects.requireNonNull(methodResolver, "Caller supplier cannot be null.");
         return this;
     }
 
@@ -86,75 +61,19 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      * @param customSerializer The custom serializer to use.
      * @return The RunaboutServiceBuilder.
      */
-    public RunaboutServiceBuilder<T> setCustomSerializer(RunaboutSerializer customSerializer) {
+    public RunaboutServiceBuilder setCustomSerializer(final RunaboutSerializer customSerializer) {
         this.customSerializer = Objects.requireNonNull(customSerializer, "Custom serializer cannot be null.");
         return this;
     }
 
     /**
-     * Sets a consumer for any throwables that occur during the RunaboutService's operation.
-     * By default, the service will not throw exceptions, but will throw errors.
+     * Sets the listener to invoke on errors.
      *
-     * @param throwableConsumer a consumer
-     * @return The RunaboutServiceBuilder.
+     * @param listener RunaboutListener instance.
+     * @return The RunaboutServiceBuilder instance.
      */
-    public RunaboutServiceBuilder<T> setThrowableConsumer(Consumer<Throwable> throwableConsumer) {
-        this.throwableConsumer = Objects.requireNonNull(throwableConsumer, "Throwable consumer cannot be null.");
-        return this;
-    }
-
-    /**
-     * Sets whether the RunaboutService should not be able to invoke instance serializer methods
-     * annotated with {@link ToRunabout} from superclasses.
-     * By default, the service will not exclude super classes' instance serializer methods.
-     *
-     * @param excludeSuper Whether the service should exclude super classes.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder<T> setExcludeSuper(boolean excludeSuper) {
-        this.excludeSuper = excludeSuper;
-        return this;
-    }
-
-    /**
-     * Sets the datetime supplier for the RunaboutService.
-     * The supplier should return the current datetime UTC as an ISO-8601 formatted string.
-     * By default, the supplier will return the current datetime using {@link Instant#now()}.
-     *
-     * @param datetimeSupplier The datetime supplier.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder<T> setDatetimeSupplier(Supplier<String> datetimeSupplier) {
-        this.datetimeSupplier = datetimeSupplier;
-        return this;
-    }
-
-    /**
-     * Sets the methodToStringFunction used to convert the caller method to a string for the JSON object
-     * in a way that Runabout knows how to read. The expected format is as follows:
-     * Fully qualified classname + "#" + method name + "(" + fully qualified argument types in order
-     * delimited by ", " ... + ")"
-     *
-     * @param methodToStringFunction The methodToString function.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder<T> setMethodToStringFunction(Function<Method, String> methodToStringFunction) {
-        this.methodToStringFunction = methodToStringFunction;
-        return this;
-    }
-
-    /**
-     * Sets the stack frame predicate for the RunaboutService.
-     * The predicate is used to filter out stack frames when determining the caller in {@link DefaultCallerSupplier}.
-     * This method is mutually exclusive with {@link #setCallerClassBlacklist(Set)} and
-     * {@link #setCallerSupplier(Supplier)}. If a caller black list is set, the predicate will just test if the
-     * declared class of the stack frame is not in the blacklist.
-     *
-     * @param stackFramePredicate The stack frame predicate.
-     * @return The RunaboutServiceBuilder.
-     */
-    public RunaboutServiceBuilder<T> setStackFramePredicate(Predicate<StackWalker.StackFrame> stackFramePredicate) {
-        this.stackFramePredicate = Objects.requireNonNull(stackFramePredicate, "Predicate cannot be null.");
+    public RunaboutServiceBuilder setListener(final RunaboutListener listener) {
+        this.listener = listener;
         return this;
     }
 
@@ -163,49 +82,28 @@ public class RunaboutServiceBuilder<T extends JsonObject> {
      *
      * @return The RunaboutService.
      */
-    public RunaboutService<T> build() {
+    public RunaboutService build() {
 
-        if (callerClassBlacklist != null && stackFramePredicate != null) {
-            throw new RunaboutException("Caller class blacklist and stack frame predicate setters " +
-                    "are mutually exclusive.");
-        }
+        final RunaboutApi runaboutApiFinal = resolveService(runaboutApi, RunaboutApi.class)
+                .orElseThrow(() -> new IllegalArgumentException("Runabout API is required."));
 
-        final Predicate<StackWalker.StackFrame> defaultCallerSupplierPredicate = Optional.ofNullable(stackFramePredicate)
-                .orElseGet(() -> Optional.ofNullable(callerClassBlacklist)
-                        .map(DefaultCallerSupplier::getCallerClassPredicate)
-                        .orElse(null));
+        final MethodResolver methodResolverFinal = resolveService(methodResolver, MethodResolver.class)
+                .orElseGet(MethodResolverImpl::new);
 
-        if (callerSupplier != null && defaultCallerSupplierPredicate != null) {
-            throw new RunaboutException("Caller supplier and caller predicate/blacklist " +
-                    "setters are mutually exclusive.");
-        }
+        final RunaboutSerializer customSerializerFinal = resolveService(customSerializer, RunaboutSerializer.class)
+                .orElse(null);
 
-        final Supplier<Method> callerSupplierFinal = Optional.ofNullable(callerSupplier)
-                .orElseGet(() -> {
-                    final Predicate<StackWalker.StackFrame> predicateFinal = Optional
-                            .ofNullable(defaultCallerSupplierPredicate).orElse(stackFrame -> true);
-                    return new DefaultCallerSupplier(predicateFinal);
-                });
+        final RunaboutListener listenerFinal = resolveService(listener, RunaboutListener.class)
+                .orElse(null);
 
-        final RunaboutSerializer customSerializerFinal = Optional.ofNullable(this.customSerializer)
-                .orElseGet(RunaboutSerializer::getSerializer);
-
-        final Consumer<Throwable> throwableConsumerFinal = Optional.ofNullable(throwableConsumer)
-                .orElse(RunaboutServiceBuilder::defaultThrowableConsumer);
-
-        final Supplier<String> datetimeSupplierFinal = Optional.ofNullable(this.datetimeSupplier)
-                .orElseGet(() -> () -> Instant.now().toString());
-
-        final Function<Method, String> methodToStringFunctionFinal = Optional.ofNullable(this.methodToStringFunction)
-                .orElse(RunaboutUtils::methodToRunaboutString);
-
-        return new RunaboutServiceImpl<>(excludeSuper, throwableConsumerFinal, callerSupplierFinal,
-                customSerializerFinal, jsonFactory, datetimeSupplierFinal, methodToStringFunctionFinal);
+        return new RunaboutServiceImpl(projectName,
+                runaboutApiFinal,
+                methodResolverFinal,
+                listenerFinal,
+                customSerializerFinal);
     }
 
-    private static void defaultThrowableConsumer(Throwable t) {
-        if (t instanceof Error) {
-            throw (Error) t;
-        }
+    private static <T> Optional<T> resolveService(final T input, final Class<T> service) {
+        return Optional.ofNullable(input).or(() -> ServiceLoader.load(service).findFirst());
     }
 }
