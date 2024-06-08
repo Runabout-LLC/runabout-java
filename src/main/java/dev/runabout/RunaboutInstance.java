@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.function.Supplier;
 
+/**
+ * POJO representing the json structure of a single object as an input for a Runabout scenario.
+ */
 public class RunaboutInstance implements RunaboutInput {
 
     private final String type;

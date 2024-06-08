@@ -74,7 +74,6 @@ public class RunaboutApiTests {
         });
     }
 
-
     private static void withLocalServer(BiFunction<Headers,String,Integer> logic, Consumer<Integer> test) {
         HttpServer server = null;
         try {

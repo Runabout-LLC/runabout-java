@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * POJO representing the json structure of a Runabout scenario.
+ */
 public final class RunaboutScenario {
 
     private final String method;
