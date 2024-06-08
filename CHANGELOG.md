@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0 - 2024-06-07
+### Added
+- RunaboutAPI interface and builder for saving runabout Scenarios to the Runabout ingest API asynchronously.
+- RunaboutEnabled and RunaboutParameter annotations for easier serialization of object via a constructor.
+- MethodResolver interface and builder for determining a scenario's caller method at runtime.
+
+### Changed
+- RunaboutServiceBuilder has changed many methods. All interfaces that have setters are discoverable via SPI.
+- RunaboutService has been simplified to three methods for three use cases: serialization of an object, serialization of a scenario, and saving a scenario to the Runabout ingest API.
+
 ## 1.2.2 - 2024-04-15
 ### Added
 - Added support for anonymous classes as Runabout inputs. Anonymous classes will be cast to the interface/class they implement or extend.
