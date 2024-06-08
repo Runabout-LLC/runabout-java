@@ -19,28 +19,32 @@ public class DocumentJsonObject implements JsonObject {
     }
 
     @Override
-    public void put(String key, Boolean value) {
+    public DocumentJsonObject put(String key, Boolean value) {
         document.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, Number value) {
+    public DocumentJsonObject put(String key, Number value) {
         document.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, String value) {
+    public DocumentJsonObject put(String key, String value) {
         document.put(key, value);
+        return this;
     }
 
     @Override
-    public void put(String key, JsonObject value) {
+    public DocumentJsonObject put(String key, JsonObject value) {
         document.put(key, value);
+        return this;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> void put(String key, Class<T> clazz, List<T> values) {
+    public <T> DocumentJsonObject put(String key, Class<T> clazz, List<T> values) {
 
         if (clazz == JsonObject.class) {
             final List<Document> documents = ((List<DocumentJsonObject>) values).stream()
@@ -49,6 +53,8 @@ public class DocumentJsonObject implements JsonObject {
         } else {
             document.put(key, values);
         }
+
+        return this;
     }
 
     @Override
