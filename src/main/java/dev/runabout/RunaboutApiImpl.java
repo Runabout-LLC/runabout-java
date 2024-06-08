@@ -66,7 +66,7 @@ class RunaboutApiImpl implements RunaboutApi {
         //
         // Clear out the authorization header after the request is sent for security purposes.
         //
-        requestBuilder.setHeader("Authorization", null);
+        requestBuilder.setHeader("Authorization", "");
     }
 
     private void onError(final Throwable t) {
