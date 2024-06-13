@@ -30,7 +30,6 @@ public class RunaboutApiTests {
         final AtomicBoolean failed = new AtomicBoolean(false);
         withLocalServer(
             (headers, s) -> {
-                System.out.println("headers: " + headers);
                 token.set(headers.get("Authorization").get(0).replace("Bearer ", ""));
                 body.set(Document.parse(s));
                 return 200;
