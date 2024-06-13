@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +70,7 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public RunaboutScenario createScenario(final String eventId, final JsonObject properties, final Object... objects) {
 
-        final Timestamp datetime = getDatetime();
+        final String datetime = Instant.now().toString();
         final String method = methodResolver.getSerializedMethod();
 
         final List<RunaboutInstance> instances = new ArrayList<>();
@@ -251,9 +250,5 @@ class RunaboutServiceImpl implements RunaboutService {
                 .map(c -> c.getInterfaces().length > 0 ? c.getInterfaces()[0] : c.getSuperclass())
                 .map(Class::getCanonicalName)
                 .orElse("null");
-    }
-
-    private static Timestamp getDatetime() {
-        return Timestamp.from(Instant.now());
     }
 }

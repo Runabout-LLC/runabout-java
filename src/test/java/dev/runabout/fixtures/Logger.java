@@ -24,7 +24,6 @@ public class Logger {
     }
 
     public void runaboutInfo(final Object... objects) {
-//        runaboutService.sendScenario(event, properties, objects);
         info(() -> runaboutService.createScenario(null, null, objects).toJsonObject().toJson());
     }
 

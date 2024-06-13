@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0 - 2024-06-12
+### Changed
+- Updated the RunaboutService to use java.time.Instant#toString for the datetime field instead of java.sql.Timestamp.
+
 ## 2.0.0 - 2024-06-07
 ### Added
 - RunaboutAPI interface and builder for saving runabout Scenarios to the Runabout ingest API asynchronously.

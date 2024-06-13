@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -31,7 +30,6 @@ public class RunaboutApiTests {
         final AtomicBoolean failed = new AtomicBoolean(false);
         withLocalServer(
             (headers, s) -> {
-                System.out.println("headers: " + headers);
                 token.set(headers.get("Authorization").get(0).replace("Bearer ", ""));
                 body.set(Document.parse(s));
                 return 200;
@@ -43,7 +41,7 @@ public class RunaboutApiTests {
                         .setListener(error -> failed.set(true))
                         .build();
                 final RunaboutScenario scenario = new RunaboutScenario("method", "event00", "dev",
-                        Timestamp.from(Instant.now()), new JsonObjectImpl().put("key", "value"), List.of(
+                        Instant.now().toString(), new JsonObjectImpl().put("key", "value"), List.of(
                         new RunaboutInstance("type", "eval", Set.of("dep1", "dep2"))));
                 api.ingestScenario(scenario);
                 Awaitility.await().atMost(Duration.ofSeconds(10))
@@ -65,7 +63,7 @@ public class RunaboutApiTests {
                     .setListener(error -> failed.set(true))
                     .build();
             final RunaboutScenario scenario = new RunaboutScenario("method", "event00", "dev",
-                    Timestamp.from(Instant.now()), new JsonObjectImpl().put("key", "value"), List.of(
+                    Instant.now().toString(), new JsonObjectImpl().put("key", "value"), List.of(
                     new RunaboutInstance("type", "eval", Set.of("dep1", "dep2"))));
             api.ingestScenario(scenario);
             Awaitility.await().atMost(Duration.ofSeconds(10))
