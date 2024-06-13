@@ -2,7 +2,6 @@ package dev.runabout;
 
 import dev.runabout.annotations.Nullable;
 
-import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
@@ -16,11 +15,11 @@ public final class RunaboutScenario {
     private final String method;
     private final String eventId;
     private final String project;
-    private final Timestamp datetime;
+    private final String datetime;
     private final JsonObject properties;
     private final Collection<RunaboutInstance> instances;
 
-    public RunaboutScenario(String method, String eventId, @Nullable String project, Timestamp datetime,
+    public RunaboutScenario(String method, String eventId, @Nullable String project, String datetime,
                             @Nullable JsonObject properties, Collection<RunaboutInstance> instances) {
         this.method = method;
         this.eventId = eventId;
@@ -42,7 +41,7 @@ public final class RunaboutScenario {
         return project;
     }
 
-    public Timestamp getDatetime() {
+    public String getDatetime() {
         return datetime;
     }
 
@@ -66,7 +65,7 @@ public final class RunaboutScenario {
                 .put(RunaboutConstants.VERSION_KEY, RunaboutConstants.JSON_CONTRACT_VERSION)
                 .put(RunaboutConstants.EVENT_ID_KEY, eventId)
                 .put(RunaboutConstants.PROJECT_KEY, project)
-                .put(RunaboutConstants.DATETIME_KEY, datetime.toString())
+                .put(RunaboutConstants.DATETIME_KEY, datetime)
                 .put(RunaboutConstants.PROPERTIES_KEY, properties)
                 .put(RunaboutConstants.METHOD_KEY, method)
                 .put(RunaboutConstants.INSTANCES_KEY, JsonObject.class, jsonInstances);
