@@ -9,10 +9,12 @@ import java.util.function.Consumer;
 class CommandServer {
 
     private final int port;
+    private final RunaboutListener listener;
     private final Consumer<Command> commandConsumer;
 
-    CommandServer(final int port, Consumer<Command> commandConsumer) {
+    CommandServer(final int port, final RunaboutListener listener, Consumer<Command> commandConsumer) {
         this.port = port;
+        this.listener = listener;
         this.commandConsumer = commandConsumer;
     }
 
@@ -23,13 +25,18 @@ class CommandServer {
             server.setExecutor(null);
             server.createContext("/command", exchange -> {
                 final String json = new String(exchange.getRequestBody().readAllBytes());
-                final Command command = Command.of(json);
-                commandConsumer.accept(command);
-                exchange.sendResponseHeaders(200, 0);
+                try {
+                    final Command command = Command.of(json);
+                    commandConsumer.accept(command);
+                    exchange.sendResponseHeaders(200, 0);
+                } catch (Exception e) {
+                    listener.onError(e);
+                    exchange.sendResponseHeaders(500, 0);
+                }
                 exchange.close();
             });
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            listener.onError(e);
         }
     }
 }

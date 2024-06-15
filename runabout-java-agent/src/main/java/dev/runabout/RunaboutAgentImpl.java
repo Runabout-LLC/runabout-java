@@ -11,59 +11,71 @@ import net.bytebuddy.matcher.ElementMatchers;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class RunaboutAgentImpl implements RunaboutAgent {
 
     private Instrumentation instrumentation;
 
+    private final int port;
     private final String hookUrl;
     private final List<String> serverPath;
+    private final CommandServer commandServer;
     private final ContextProvider contextProvider;
     private final RunaboutService runaboutService;
-    private final AtomicBoolean installed = new AtomicBoolean(false);
-    private final AtomicBoolean disabled = new AtomicBoolean(false);
+    private final RunaboutListener runaboutListener;
 
-    RunaboutAgentImpl(String hookUrl,
+
+    private final AtomicBoolean installed = new AtomicBoolean(false);
+
+    RunaboutAgentImpl(int port,
+                      String hookUrl,
                       List<String> serverPath,
                       ContextProvider contextProvider,
-                      RunaboutService runaboutService) {
+                      RunaboutService runaboutService,
+                      RunaboutListener runaboutListener) {
+        this.port = port;
         this.hookUrl = hookUrl;
         this.serverPath = serverPath;
         this.contextProvider = contextProvider;
         this.runaboutService = runaboutService;
+        this.runaboutListener = runaboutListener;
+        this.commandServer = new CommandServer(port, runaboutListener, this::handleCommand);
     }
 
     @Override
     public void install() {
         if (!installed.get()) {
+            commandServer.start();
             this.instrumentation = ByteBuddyAgent.install();
+            MethodInterceptor.setRunaboutListener(runaboutListener);
             MethodInterceptor.setContextProvider(contextProvider);
             MethodInterceptor.setRunaboutService(runaboutService);
             register(hookUrl, serverPath);
             installed.set(true);
         }
-//        else if (disabled.get()) {
-//            disabled.set(false);
-//        }
     }
 
     @Override
     public void disable() {
-        disabled.set(true);
+        // TODO
     }
 
-    private static void handleCommand(final Command command) {
-        final Map.Entry<Class<?>, Method> references = getReferences(command.getReference());
-        final Class<?> targetClass = references.getKey();
-        final Method targetMethod = references.getValue();
+    private void handleCommand(final Command command) throws RunaboutException {
+
+        Objects.requireNonNull(command.getReference(), "Invalid command, missing reference.");
+
+        final Pair<Class<?>, Method> references = getReferences(command.getReference());
+        final Class<?> clazz = references.left;
+        final Method method = references.right;
 
         final AsmVisitorWrapper visitor = Advice
                 .to(MethodInterceptor.class)
-                .on(targetMethod == null ? ElementMatchers.any() : ElementMatchers.is(targetMethod));
-        try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(targetClass).visit(visitor).make()) {
-            unloaded.load(targetClass.getClassLoader(),
+                .on(method == null ? ElementMatchers.any() : ElementMatchers.is(method));
+        try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).visit(visitor).make()) {
+            unloaded.load(clazz.getClassLoader(),
                     ClassReloadingStrategy.fromInstalledAgent(ClassReloadingStrategy.Strategy.RETRANSFORMATION));
         }
     }
@@ -72,8 +84,28 @@ class RunaboutAgentImpl implements RunaboutAgent {
         // TODO call out to ingest.runabout.dev to register ourselves as a target for commands.
     }
 
-    private static Map.Entry<Class<?>, Method> getReferences(final String identifier) {
-        // TODO parse method string.
-        return Map.entry(null,null);
+    private static Pair<Class<?>, Method> getReferences(final String identifier) {
+
+        Method method = null;
+        if (identifier.contains("#")) {
+            method = RunaboutUtils.runaboutStringToMethod(identifier);
+        }
+
+        final Class<?> clazz = Optional.ofNullable(method)
+                .map(Method::getDeclaringClass)
+                .orElseGet(() -> (Class) RunaboutUtils.getClass(identifier)); // TODO confirm this is safe.
+
+        return new Pair<>(clazz, method);
+    }
+
+    private static final class Pair<T,U> {
+
+        final T left;
+        final U right;
+
+        private Pair(T left, U right) {
+            this.left = left;
+            this.right = right;
+        }
     }
 }
