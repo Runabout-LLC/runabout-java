@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+}
+
+group = 'dev.runabout'
+version = '2.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'dev.runabout:runabout-java:2.1.0'
+    implementation 'net.bytebuddy:byte-buddy:1.14.17'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
