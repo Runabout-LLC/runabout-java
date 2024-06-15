@@ -79,7 +79,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
         final AsmVisitorWrapper visitor = Advice
                 .to(MethodInterceptor.class)
-                .on(method == null ? ElementMatchers.any() : ElementMatchers.is(method));
+                .on(method == null ? ElementMatchers.not(ElementMatchers.isConstructor()) : ElementMatchers.is(method));
         try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).visit(visitor).make()) {
             unloaded.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent(STRATEGY));
         }

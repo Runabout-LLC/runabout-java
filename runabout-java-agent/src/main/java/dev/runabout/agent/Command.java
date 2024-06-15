@@ -1,8 +1,12 @@
 package dev.runabout.agent;
 
+import dev.runabout.annotations.RunaboutEnabled;
+import dev.runabout.annotations.RunaboutParameter;
+
 import java.util.Objects;
 
-class Command {
+// TODO make not public
+public class Command {
 
     private static final String TIMEOUT_KEY = "timeout";
     private static final String REFERENCE_KEY = "reference";
@@ -10,7 +14,8 @@ class Command {
     private final long timeout;
     private final String reference;
 
-    Command(long timeout, String reference) {
+    @RunaboutEnabled
+    public Command(@RunaboutParameter("timeout") long timeout, @RunaboutParameter("reference") String reference) {
         this.timeout = timeout;
         this.reference = reference;
     }

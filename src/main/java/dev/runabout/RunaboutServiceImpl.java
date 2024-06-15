@@ -117,7 +117,7 @@ class RunaboutServiceImpl implements RunaboutService {
     private RunaboutInput invokeRunaboutEnabledSerializer(final Object object, final Class<?> clazz) {
         try {
             RunaboutInput input = null;
-            final Constructor<?> constructor = Arrays.stream(clazz.getConstructors())
+            final Constructor<?> constructor = Arrays.stream(clazz.getDeclaredConstructors())
                     .filter(c -> c.isAnnotationPresent(RunaboutEnabled.class))
                     .findFirst().orElse(null);
 
