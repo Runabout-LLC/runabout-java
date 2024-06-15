@@ -32,6 +32,4 @@ public class Main {
         }, service, throwable -> System.out.println("Error caught"));
         agent.install();
     }
-
-
 }

@@ -77,10 +77,29 @@ class RunaboutAgentImpl implements RunaboutAgent {
         final Class<?> clazz = references.left;
         final Method method = references.right;
 
+        switch (command.getAction()) {
+            case ENABLE:
+                loadIntercepter(clazz, method);
+                break;
+            case DISABLE:
+                restore(clazz);
+                break;
+            default:
+                throw new RunaboutException("Invalid command action: " + command.getAction().name());
+        }
+    }
+
+    private static void loadIntercepter(final Class<?> clazz, final Method method) {
         final AsmVisitorWrapper visitor = Advice
                 .to(MethodInterceptor.class)
                 .on(method == null ? ElementMatchers.not(ElementMatchers.isConstructor()) : ElementMatchers.is(method));
         try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).visit(visitor).make()) {
+            unloaded.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent(STRATEGY));
+        }
+    }
+
+    private static void restore(final Class<?> clazz) {
+        try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).make()) {
             unloaded.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent(STRATEGY));
         }
     }
