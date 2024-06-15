@@ -1,5 +1,9 @@
-package dev.runabout;
+package dev.runabout.agent;
 
+import dev.runabout.RunaboutException;
+import dev.runabout.RunaboutListener;
+import dev.runabout.RunaboutService;
+import dev.runabout.RunaboutUtils;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.asm.Advice;
@@ -16,6 +20,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class RunaboutAgentImpl implements RunaboutAgent {
+
+    private static final ClassReloadingStrategy.Strategy STRATEGY = ClassReloadingStrategy.Strategy.RETRANSFORMATION;
 
     private Instrumentation instrumentation;
 
@@ -75,8 +81,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
                 .to(MethodInterceptor.class)
                 .on(method == null ? ElementMatchers.any() : ElementMatchers.is(method));
         try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).visit(visitor).make()) {
-            unloaded.load(clazz.getClassLoader(),
-                    ClassReloadingStrategy.fromInstalledAgent(ClassReloadingStrategy.Strategy.RETRANSFORMATION));
+            unloaded.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent(STRATEGY));
         }
     }
 

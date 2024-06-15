@@ -1,4 +1,4 @@
-package dev.runabout;
+package dev.runabout.agent;
 
 public interface RunaboutAgent {
 

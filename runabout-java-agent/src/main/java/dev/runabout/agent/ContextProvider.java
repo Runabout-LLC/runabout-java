@@ -1,5 +1,6 @@
-package dev.runabout;
+package dev.runabout.agent;
 
+import dev.runabout.JsonObject;
 import dev.runabout.annotations.Nullable;
 
 import java.lang.reflect.Method;

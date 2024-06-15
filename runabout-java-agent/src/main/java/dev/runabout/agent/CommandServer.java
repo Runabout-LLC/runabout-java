@@ -1,9 +1,12 @@
-package dev.runabout;
+package dev.runabout.agent;
 
 import com.sun.net.httpserver.HttpServer;
+import dev.runabout.RunaboutListener;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 class CommandServer {
@@ -21,19 +24,23 @@ class CommandServer {
     public void start() {
         try {
             final HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+            server.setExecutor(Executors.newFixedThreadPool(2));
             server.start();
-            server.setExecutor(null);
             server.createContext("/command", exchange -> {
-                final String json = new String(exchange.getRequestBody().readAllBytes());
                 try {
+                    final String json = new String(exchange.getRequestBody().readAllBytes());
                     final Command command = Command.of(json);
                     commandConsumer.accept(command);
                     exchange.sendResponseHeaders(200, 0);
                 } catch (Exception e) {
-                    listener.onError(e);
-                    exchange.sendResponseHeaders(500, 0);
+//                    listener.onError(e); TODO does this make sense here?
+                    exchange.sendResponseHeaders(500, e.getMessage().length());
+                    final OutputStream outputStream = exchange.getResponseBody();
+                    outputStream.write(e.getMessage().getBytes());
+                    outputStream.close();
+                } finally {
+                    exchange.close();
                 }
-                exchange.close();
             });
         } catch (IOException e) {
             listener.onError(e);
