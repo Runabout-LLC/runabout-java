@@ -1,3 +1,4 @@
 rootProject.name = 'runabout-java'
 include 'runabout-java-agent'
+include 'runabout-java'
 
