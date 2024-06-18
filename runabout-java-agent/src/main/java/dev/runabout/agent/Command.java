@@ -5,24 +5,24 @@ import dev.runabout.annotations.RunaboutParameter;
 
 import java.util.Objects;
 
-// TODO make not public
-public class Command {
+class Command {
 
     private static final String ACTION_KEY = "action";
     private static final String TIMEOUT_KEY = "timeout";
     private static final String REFERENCE_KEY = "reference";
+    private static final String REFERENCE_TYPE_KEY = "referenceType";
 
     private final long timeout;
     private final Action action;
     private final String reference;
+    private final ReferenceType referenceType;
 
     @RunaboutEnabled
-    public Command(@RunaboutParameter("timeout") long timeout,
-                   @RunaboutParameter("action") Action action,
-                   @RunaboutParameter("reference") String reference) {
+    Command(final long timeout, final Action action, final String reference, final ReferenceType referenceType) {
         this.timeout = timeout;
         this.action = action;
         this.reference = reference;
+        this.referenceType = referenceType;
     }
 
     public long getTimeout() {
@@ -37,6 +37,10 @@ public class Command {
         return reference;
     }
 
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
     public static Command of(final String json) {
 
         final String cleanJson = json.trim();
@@ -49,6 +53,7 @@ public class Command {
         Long timeout = null;
         Action action = null;
         String reference = null;
+        ReferenceType referenceType = null;
 
         for (final String keyValuePair : body.split(",")) {
 
@@ -61,22 +66,35 @@ public class Command {
             final String key = keyValue[0].trim().replaceAll("\"", "");
             final String value = keyValue[1].trim().replaceAll("\"", "");
 
-            if (key.equals(TIMEOUT_KEY)) {
-                timeout = Long.parseLong(value);
-            } else if (key.equals(REFERENCE_KEY)) {
-                reference = value;
-            } else if (key.equals(ACTION_KEY)) {
-                action = Action.valueOf(value.toUpperCase());
+            switch (key) {
+                case TIMEOUT_KEY:
+                    timeout = Long.parseLong(value);
+                    break;
+                case ACTION_KEY:
+                    action = Action.valueOf(value.toUpperCase());
+                    break;
+                case REFERENCE_KEY:
+                    reference = value;
+                    break;
+                case REFERENCE_TYPE_KEY:
+                    referenceType = ReferenceType.valueOf(value.toUpperCase());
+                    break;
             }
         }
 
         return new Command(Objects.requireNonNull(timeout, "Invalid command, missing timeout"),
                 Objects.requireNonNull(action, "Invalid command, missing action"),
-                Objects.requireNonNull(reference, "Invalid command, missing reference"));
+                Objects.requireNonNull(reference, "Invalid command, missing reference"),
+                Objects.requireNonNull(referenceType, "Invalid command, missing referenceType"));
     }
 
     public enum Action {
         ENABLE,
         DISABLE
+    }
+
+    public enum ReferenceType {
+        CLASS,
+        METHOD
     }
 }

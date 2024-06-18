@@ -4,5 +4,7 @@ public interface RunaboutAgent {
 
     void install();
 
+    void refresh();
+
     void disable();
 }

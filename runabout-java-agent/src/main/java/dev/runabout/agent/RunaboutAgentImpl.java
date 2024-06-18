@@ -23,50 +23,49 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
     private static final ClassReloadingStrategy.Strategy STRATEGY = ClassReloadingStrategy.Strategy.RETRANSFORMATION;
 
-    private Instrumentation instrumentation;
-
-    private final int port;
-    private final String hookUrl;
     private final List<String> serverPath;
-    private final CommandServer commandServer;
     private final ContextProvider contextProvider;
     private final RunaboutService runaboutService;
     private final RunaboutListener runaboutListener;
 
-
     private final AtomicBoolean installed = new AtomicBoolean(false);
 
-    RunaboutAgentImpl(int port,
-                      String hookUrl,
-                      List<String> serverPath,
+    RunaboutAgentImpl(List<String> serverPath,
                       ContextProvider contextProvider,
                       RunaboutService runaboutService,
                       RunaboutListener runaboutListener) {
-        this.port = port;
-        this.hookUrl = hookUrl;
         this.serverPath = serverPath;
         this.contextProvider = contextProvider;
         this.runaboutService = runaboutService;
         this.runaboutListener = runaboutListener;
-        this.commandServer = new CommandServer(port, runaboutListener, this::handleCommand);
     }
 
     @Override
     public void install() {
         if (!installed.get()) {
-            commandServer.start();
-            this.instrumentation = ByteBuddyAgent.install();
-            MethodInterceptor.setRunaboutListener(runaboutListener);
-            MethodInterceptor.setContextProvider(contextProvider);
-            MethodInterceptor.setRunaboutService(runaboutService);
-            register(hookUrl, serverPath);
-            installed.set(true);
+            ByteBuddyAgent.install();
+            register("TODO", serverPath); // TODO register via RunaboutAPI
         }
+        MethodInterceptor.setRunaboutListener(runaboutListener);
+        MethodInterceptor.setContextProvider(contextProvider);
+        MethodInterceptor.setRunaboutService(runaboutService);
+        MethodInterceptor.enable();
+        installed.set(true);
+    }
+
+    @Override
+    public void refresh() {
+        // TODO callout to runabout API to get latest commands.
+        final String json = "TODO";
+        final List<Command> commands = List.of(Command.of(json));
+        final CommandStore commandStore = CommandStore.newCommandStore(commands, runaboutListener);
+        MethodInterceptor.setCommandStore(commandStore); // TODO allow resetting this one?
     }
 
     @Override
     public void disable() {
-        // TODO
+        MethodInterceptor.disable();
+        // TODO stop polling.
     }
 
     private void handleCommand(final Command command) throws RunaboutException {
@@ -79,7 +78,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
         switch (command.getAction()) {
             case ENABLE:
-                loadIntercepter(clazz, method);
+                loadInterceptor(clazz, method);
                 break;
             case DISABLE:
                 restore(clazz);
@@ -89,7 +88,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
         }
     }
 
-    private static void loadIntercepter(final Class<?> clazz, final Method method) {
+    private static void loadInterceptor(final Class<?> clazz, final Method method) {
         final AsmVisitorWrapper visitor = Advice
                 .to(MethodInterceptor.class)
                 .on(method == null ? ElementMatchers.not(ElementMatchers.isConstructor()) : ElementMatchers.is(method));

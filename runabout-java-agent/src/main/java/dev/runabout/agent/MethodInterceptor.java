@@ -7,23 +7,72 @@ import net.bytebuddy.asm.Advice;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Instant;
 
 class MethodInterceptor {
 
-    public static ContextProvider contextProvider;
-    public static RunaboutService runaboutService;
-    public static RunaboutListener runaboutListener;
+    // TODO maybe hold onto agent instead of all the interfaces on the agent?
+    private static CommandStore commandStore;
+    private static ContextProvider contextProvider;
+    private static RunaboutService runaboutService;
+    private static RunaboutListener runaboutListener;
 
-    public static void setContextProvider(ContextProvider contextProvider) {
+    private static boolean disabled = false;
+
+    public static CommandStore getCommandStore() {
+        return commandStore;
+    }
+
+    public static ContextProvider getContextProvider() {
+        return contextProvider;
+    }
+
+    public static RunaboutService getRunaboutService() {
+        return runaboutService;
+    }
+
+    public static RunaboutListener getRunaboutListener() {
+        return runaboutListener;
+    }
+
+    public static boolean isDisabled() {
+        return disabled;
+    }
+
+    static void setCommandStore(CommandStore commandStore) {
+        if (MethodInterceptor.commandStore != null) {
+            throw new IllegalStateException("MethodInterceptor.CommandStore can only be set once.");
+        }
+        MethodInterceptor.commandStore = commandStore;
+    }
+
+    static void setContextProvider(ContextProvider contextProvider) {
+        if (MethodInterceptor.contextProvider != null) {
+            throw new IllegalStateException("MethodInterceptor.ContextProvider can only be set once.");
+        }
         MethodInterceptor.contextProvider = contextProvider;
     }
 
-    public static void setRunaboutService(RunaboutService runaboutService) {
+    static void setRunaboutService(RunaboutService runaboutService) {
+        if (MethodInterceptor.runaboutService != null) {
+            throw new IllegalStateException("MethodInterceptor.RunaboutService can only be set once.");
+        }
         MethodInterceptor.runaboutService = runaboutService;
     }
 
-    public static void setRunaboutListener(RunaboutListener runaboutListener) {
+    static void setRunaboutListener(RunaboutListener runaboutListener) {
+        if (MethodInterceptor.runaboutListener != null) {
+            throw new IllegalStateException("MethodInterceptor.RunaboutListener can only be set once.");
+        }
         MethodInterceptor.runaboutListener = runaboutListener;
+    }
+
+    static void enable() {
+        disabled = false;
+    }
+
+    static void disable() {
+        disabled = true;
     }
 
     @Advice.OnMethodEnter
@@ -32,27 +81,42 @@ class MethodInterceptor {
                                      @Advice.This(optional = true) Object thisObject,
                                      @Advice.AllArguments Object[] args) {
 
-        System.out.println("Method intercepted");
-        try {
+        if (MethodInterceptor.isDisabled()) {
+            return;
+        }
 
+        System.out.println("Method intercepted");
+        final RunaboutListener runaboutListener = MethodInterceptor.getRunaboutListener();
+
+        try {
+            final RunaboutService runaboutService = MethodInterceptor.getRunaboutService();
             if (runaboutService != null) {
 
-                String eventId = null;
-                JsonObject properties = null;
-                if (contextProvider != null) {
-                    eventId = contextProvider.getEventId(clazz, method);
-                    properties = contextProvider.getProperties(clazz, method);
-                }
+                final Instant now = Instant.now();
+                final Long timeout = MethodInterceptor.getCommandStore().get(clazz, method);
 
-                Object[] allInstances = args;
-                if (!Modifier.isStatic(method.getModifiers())) {
-                    System.out.println("Method is not static");
-                    allInstances = new Object[args.length + 1];
-                    allInstances[0] = thisObject;
-                    System.arraycopy(args, 0, allInstances, 1, args.length);
-                }
+                if (timeout != null && timeout > now.toEpochMilli()) {
 
-                System.out.println(runaboutService.createScenario(eventId, properties, allInstances).toJsonObject().toJson());
+                    String eventId = null;
+                    JsonObject properties = null;
+                    final ContextProvider contextProvider = MethodInterceptor.getContextProvider();
+
+                    if (contextProvider != null) {
+                        eventId = contextProvider.getEventId(clazz, method);
+                        properties = contextProvider.getProperties(clazz, method);
+                    }
+
+                    Object[] allInstances = args;
+
+                    if (!Modifier.isStatic(method.getModifiers())) {
+                        System.out.println("Method is not static");
+                        allInstances = new Object[args.length + 1];
+                        allInstances[0] = thisObject;
+                        System.arraycopy(args, 0, allInstances, 1, args.length);
+                    }
+
+                    System.out.println(runaboutService.createScenario(eventId, properties, allInstances).toJsonObject().toJson()); // TODO save instead of printing
+                }
             }
         } catch (Exception e) {
             runaboutListener.onError(e);
