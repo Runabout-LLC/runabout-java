@@ -12,29 +12,29 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.matcher.ElementMatchers;
 
-import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class RunaboutAgentImpl implements RunaboutAgent {
 
     private static final ClassReloadingStrategy.Strategy STRATEGY = ClassReloadingStrategy.Strategy.RETRANSFORMATION;
 
-    private final List<String> serverPath;
+    private final String serverGroup;
     private final ContextProvider contextProvider;
     private final RunaboutService runaboutService;
     private final RunaboutListener runaboutListener;
 
     private final AtomicBoolean installed = new AtomicBoolean(false);
 
-    RunaboutAgentImpl(List<String> serverPath,
+    RunaboutAgentImpl(String serverGroup,
                       ContextProvider contextProvider,
                       RunaboutService runaboutService,
                       RunaboutListener runaboutListener) {
-        this.serverPath = serverPath;
+        this.serverGroup = serverGroup;
         this.contextProvider = contextProvider;
         this.runaboutService = runaboutService;
         this.runaboutListener = runaboutListener;
@@ -44,7 +44,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
     public void install() {
         if (!installed.get()) {
             ByteBuddyAgent.install();
-            register("TODO", serverPath); // TODO register via RunaboutAPI
+//            register("TODO", serverGroup); // TODO register via RunaboutAPI
         }
         MethodInterceptor.setRunaboutListener(runaboutListener);
         MethodInterceptor.setContextProvider(contextProvider);
@@ -58,6 +58,11 @@ class RunaboutAgentImpl implements RunaboutAgent {
         // TODO callout to runabout API to get latest commands.
         final String json = "TODO";
         final List<Command> commands = List.of(Command.of(json));
+    }
+
+    @Override
+    public void refresh(Set<Command> commands) {
+        // TODO store the list and implement/restore based on the delta
         final CommandStore commandStore = CommandStore.newCommandStore(commands, runaboutListener);
         MethodInterceptor.setCommandStore(commandStore); // TODO allow resetting this one?
     }
@@ -103,9 +108,9 @@ class RunaboutAgentImpl implements RunaboutAgent {
         }
     }
 
-    private static void register(final String hookUrl, final List<String> serverPath) {
-        // TODO call out to ingest.runabout.dev to register ourselves as a target for commands.
-    }
+//    private static void register(final String hookUrl, final List<String> serverPath) {
+//        // TODO call out to ingest.runabout.dev to register ourselves as a target for commands.
+//    }
 
     private static Pair<Class<?>, Method> getReferences(final String identifier) {
 

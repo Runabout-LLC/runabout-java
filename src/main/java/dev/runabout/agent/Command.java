@@ -1,10 +1,10 @@
 package dev.runabout.agent;
 
 import dev.runabout.annotations.RunaboutEnabled;
-import dev.runabout.annotations.RunaboutParameter;
 
 import java.util.Objects;
 
+// TODO change to instruction?
 class Command {
 
     private static final String ACTION_KEY = "action";
@@ -13,7 +13,7 @@ class Command {
     private static final String REFERENCE_TYPE_KEY = "referenceType";
 
     private final long timeout;
-    private final Action action;
+    private final Action action; // TODO do we want action? It will be good in push-based, but does it make sense now?
     private final String reference;
     private final ReferenceType referenceType;
 

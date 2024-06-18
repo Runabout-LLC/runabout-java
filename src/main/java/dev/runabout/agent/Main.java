@@ -17,8 +17,7 @@ public class Main {
                 .setListener(throwable -> System.out.println("Error caught in service"))
                 .build();
 
-        RunaboutAgent agent = new RunaboutAgentImpl(8086,
-                "localhost:8086/commands", List.of("runabout", "dev", "local"), new ContextProvider() {
+        RunaboutAgent agent = new RunaboutAgentImpl("dev", new ContextProvider() {
 
             @Override
             public String getEventId(Class<?> clazz, Method method) {
