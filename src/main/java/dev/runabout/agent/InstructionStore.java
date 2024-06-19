@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 class InstructionStore {
@@ -21,9 +21,6 @@ class InstructionStore {
     private final Map<Class<?>, Long> classMap = new HashMap<>();
     private final Set<Instruction> instructions = new HashSet<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
-
-    private InstructionStore() {
-    }
 
     @Nullable
     public Long getTimeout(final Class<?> clazz, final Method method) {
@@ -35,10 +32,10 @@ class InstructionStore {
         }
     }
 
-    InstructionStore update(final Set<Instruction> instructions,
-                            final Consumer<Instruction> installInstructions,
-                            final Consumer<Instruction> removeInstructions,
-                            final RunaboutListener listener) {
+    void update(final Set<Instruction> instructions,
+                final BiConsumer<Class<?>, Method> installInstructions,
+                final BiConsumer<Class<?>, Method> removeInstructions,
+                final RunaboutListener listener) {
 
         final Set<Instruction> prunedInstructions = prune(instructions);
 
@@ -47,14 +44,18 @@ class InstructionStore {
         //
         final Set<Instruction> toRemove = new HashSet<>(this.instructions);
         toRemove.removeAll(prunedInstructions);
-        toRemove.forEach(removeInstructions);
+        toRemove.stream()
+                .map(InstructionStore::readReferences)
+                .forEach(p -> installInstructions.accept(p.left, p.right));
 
         //
         // Invoke install callback for instructions that are new to the set.
         //
         final Set<Instruction> toInstall = new HashSet<>(prunedInstructions);
         toInstall.removeAll(this.instructions);
-        toInstall.forEach(installInstructions);
+        toInstall.stream()
+                .map(InstructionStore::readReferences)
+                .forEach(p -> installInstructions.accept(p.left, p.right));
 
         try {
             lock.writeLock().lock();
@@ -70,8 +71,7 @@ class InstructionStore {
             //
             classMap.clear();
             methodMap.clear();
-            prunedInstructions.forEach(instruction -> cacheInstruction(instruction, listener));
-            return this;
+            this.instructions.forEach(instruction -> cacheInstruction(instruction, listener));
         } finally {
             lock.writeLock().unlock();
         }
@@ -95,6 +95,18 @@ class InstructionStore {
         }
     }
 
+    private static Pair<Class<?>, Method> readReferences(final Instruction instruction) {
+        final String reference = instruction.getReference();
+        switch (instruction.getReferenceType()) {
+            case METHOD:
+                final Method method = RunaboutUtils.runaboutStringToMethod(reference);
+                return new Pair<>(method.getDeclaringClass(), method);
+            case CLASS:
+                return new Pair<>(RunaboutUtils.getClass(reference), null);
+        }
+        throw new IllegalArgumentException("Invalid reference type: " + instruction.getReferenceType());
+    }
+
     //
     // Prune instructions that have timeouts in the future.
     // Remove duplicates on a given reference by keeping the one with the latest timeout.
@@ -105,5 +117,16 @@ class InstructionStore {
                 .collect(Collectors.toMap(Instruction::getReferenceURI, i -> i,
                         (a, b) -> a.getTimeout() > b.getTimeout() ? a : b));
         return new HashSet<>(instructionMap.values());
+    }
+
+    private static final class Pair<T,U> {
+
+        final T left;
+        final U right;
+
+        private Pair(T left, U right) {
+            this.left = left;
+            this.right = right;
+        }
     }
 }

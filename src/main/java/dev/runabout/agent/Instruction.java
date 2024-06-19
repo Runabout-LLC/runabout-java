@@ -2,7 +2,7 @@ package dev.runabout.agent;
 
 import java.util.Objects;
 
-class Instruction {
+public class Instruction {
 
     private static final String TIMEOUT_KEY = "timeout";
     private static final String REFERENCE_KEY = "reference";
@@ -12,7 +12,7 @@ class Instruction {
     private final String reference;
     private final ReferenceType referenceType;
 
-    Instruction(final long timeout, final String reference, final ReferenceType referenceType) {
+    public Instruction(final long timeout, final String reference, final ReferenceType referenceType) {
         this.timeout = timeout;
         this.reference = reference;
         this.referenceType = referenceType;

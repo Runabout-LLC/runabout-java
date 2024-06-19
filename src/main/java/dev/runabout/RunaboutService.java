@@ -27,6 +27,12 @@ public interface RunaboutService {
                 .build();
     }
 
+    // TODO
+    String getProjectName();
+
+    // TODO
+    RunaboutApi getRunaboutApi();
+
     /**
      * Converts an object to a RunaboutInput.
      *

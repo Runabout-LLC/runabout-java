@@ -1,5 +1,6 @@
 package dev.runabout;
 
+import dev.runabout.agent.Instruction;
 import dev.runabout.annotations.Nullable;
 
 import java.net.http.HttpClient;
@@ -36,12 +37,18 @@ class RunaboutApiImpl implements RunaboutApi {
                 .uri(builder.getUri());
     }
 
+    @Override
     public void ingestScenario(final RunaboutScenario scenario) {
         Objects.requireNonNull(scenario.getMethod(), "Scenario cannot be null");
         if (!queue.offer(scenario)) {
             onError(new RunaboutException("Runabout scenario queue is full"));
         }
         executor.execute(new Worker());
+    }
+
+    @Override
+    public List<Instruction> getLatestInstructions(String project) {
+        return List.of(); // TODO
     }
 
     /**

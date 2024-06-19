@@ -46,6 +46,11 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     @Override
+    public RunaboutApi getRunaboutApi() {
+        return runaboutApi;
+    }
+
+    @Override
     public RunaboutInput serialize(Object object) {
 
         // Short circuit if object is null.
