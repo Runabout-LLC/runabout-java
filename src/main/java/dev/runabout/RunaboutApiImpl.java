@@ -6,10 +6,12 @@ import dev.runabout.annotations.Nullable;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -47,8 +49,8 @@ class RunaboutApiImpl implements RunaboutApi {
     }
 
     @Override
-    public List<Instruction> getLatestInstructions(String project) {
-        return List.of(); // TODO
+    public Set<Instruction> getLatestInstructions(String project) {
+        return new HashSet<>(); // TODO
     }
 
     /**

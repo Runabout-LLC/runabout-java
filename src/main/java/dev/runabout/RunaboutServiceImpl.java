@@ -46,6 +46,11 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     @Override
+    public String getProjectName() {
+        return projectName;
+    }
+
+    @Override
     public RunaboutApi getRunaboutApi() {
         return runaboutApi;
     }
