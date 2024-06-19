@@ -8,7 +8,7 @@ public interface RunaboutAgent {
 
     void refresh();
 
-    void refresh(Set<Command> commands);
+    void refresh(Set<Instruction> instructions);
 
     void disable();
 }

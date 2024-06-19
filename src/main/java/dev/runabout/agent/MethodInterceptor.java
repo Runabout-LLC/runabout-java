@@ -12,15 +12,15 @@ import java.time.Instant;
 class MethodInterceptor {
 
     // TODO maybe hold onto agent instead of all the interfaces on the agent?
-    private static CommandStore commandStore;
+    private static InstructionStore instructionStore;
     private static ContextProvider contextProvider;
     private static RunaboutService runaboutService;
     private static RunaboutListener runaboutListener;
 
     private static boolean disabled = false;
 
-    public static CommandStore getCommandStore() {
-        return commandStore;
+    public static InstructionStore getCommandStore() {
+        return instructionStore;
     }
 
     public static ContextProvider getContextProvider() {
@@ -39,11 +39,11 @@ class MethodInterceptor {
         return disabled;
     }
 
-    static void setCommandStore(CommandStore commandStore) {
-        if (MethodInterceptor.commandStore != null) {
+    static void setCommandStore(InstructionStore instructionStore) {
+        if (MethodInterceptor.instructionStore != null) {
             throw new IllegalStateException("MethodInterceptor.CommandStore can only be set once.");
         }
-        MethodInterceptor.commandStore = commandStore;
+        MethodInterceptor.instructionStore = instructionStore;
     }
 
     static void setContextProvider(ContextProvider contextProvider) {
@@ -85,7 +85,6 @@ class MethodInterceptor {
             return;
         }
 
-        System.out.println("Method intercepted");
         final RunaboutListener runaboutListener = MethodInterceptor.getRunaboutListener();
 
         try {
@@ -93,7 +92,7 @@ class MethodInterceptor {
             if (runaboutService != null) {
 
                 final Instant now = Instant.now();
-                final Long timeout = MethodInterceptor.getCommandStore().get(clazz, method);
+                final Long timeout = MethodInterceptor.getCommandStore().getTimeout(clazz, method);
 
                 if (timeout != null && timeout > now.toEpochMilli()) {
 
@@ -109,13 +108,11 @@ class MethodInterceptor {
                     Object[] allInstances = args;
 
                     if (!Modifier.isStatic(method.getModifiers())) {
-                        System.out.println("Method is not static");
                         allInstances = new Object[args.length + 1];
                         allInstances[0] = thisObject;
-                        System.arraycopy(args, 0, allInstances, 1, args.length);
                     }
 
-                    System.out.println(runaboutService.createScenario(eventId, properties, allInstances).toJsonObject().toJson()); // TODO save instead of printing
+                    runaboutService.saveScenario(method, eventId, properties, allInstances);
                 }
             }
         } catch (Exception e) {

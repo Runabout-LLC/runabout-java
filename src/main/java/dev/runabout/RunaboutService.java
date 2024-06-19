@@ -2,6 +2,8 @@ package dev.runabout;
 
 import dev.runabout.annotations.Nullable;
 
+import java.lang.reflect.Method;
+
 /**
  * Runabout interface for converting runtime java objects to JSON outputs that can be
  * used for replay debugging in <a href="https://www.runabout.dev">Runabout</a>.
@@ -58,7 +60,21 @@ public interface RunaboutService {
      * @param objects    The objects to convert to Runabout inputs in JSON.
      * @return A JSON object.
      */
-    RunaboutScenario createScenario(@Nullable final String eventId, @Nullable final JsonObject properties,
+    RunaboutScenario createScenario(@Nullable final String eventId,
+                                    @Nullable final JsonObject properties,
+                                    final Object... objects);
+
+    /**
+     * TODO javadoc
+     * @param method
+     * @param eventId
+     * @param properties
+     * @param objects
+     * @return
+     */
+    RunaboutScenario createScenario(final Method method,
+                                    @Nullable final String eventId,
+                                    @Nullable final JsonObject properties,
                                     final Object... objects);
 
     /**
@@ -70,5 +86,19 @@ public interface RunaboutService {
      * @param properties Nullable JsonObject contextual data for adding additional info to scenarios.
      * @param objects    Objects to convert to Runabout instances for the scenario.
      */
-     void saveScenario(final String eventId, final JsonObject properties, final Object... objects);
+     void saveScenario(@Nullable final String eventId,
+                       @Nullable final JsonObject properties,
+                       final Object... objects);
+
+    /**
+     * TODO javadoc
+     * @param method
+     * @param eventId
+     * @param properties
+     * @param objects
+     */
+    void saveScenario(final Method method,
+                      @Nullable final String eventId,
+                      @Nullable final JsonObject properties,
+                      final Object... objects);
 }

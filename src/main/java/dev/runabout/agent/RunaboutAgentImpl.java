@@ -57,14 +57,14 @@ class RunaboutAgentImpl implements RunaboutAgent {
     public void refresh() {
         // TODO callout to runabout API to get latest commands.
         final String json = "TODO";
-        final List<Command> commands = List.of(Command.of(json));
+        final List<Instruction> instructions = List.of(Instruction.of(json));
     }
 
     @Override
-    public void refresh(Set<Command> commands) {
+    public void refresh(Set<Instruction> instructions) {
         // TODO store the list and implement/restore based on the delta
-        final CommandStore commandStore = CommandStore.newCommandStore(commands, runaboutListener);
-        MethodInterceptor.setCommandStore(commandStore); // TODO allow resetting this one?
+        final InstructionStore instructionStore = InstructionStore.newCommandStore(instructions, runaboutListener);
+        MethodInterceptor.setCommandStore(instructionStore); // TODO allow resetting this one?
     }
 
     @Override
@@ -73,24 +73,14 @@ class RunaboutAgentImpl implements RunaboutAgent {
         // TODO stop polling.
     }
 
-    private void handleCommand(final Command command) throws RunaboutException {
+    private void handleCommand(final Instruction instruction) throws RunaboutException {
 
-        Objects.requireNonNull(command.getReference(), "Invalid command, missing reference.");
+        Objects.requireNonNull(instruction.getReference(), "Invalid command, missing reference.");
 
-        final Pair<Class<?>, Method> references = getReferences(command.getReference());
+        final Pair<Class<?>, Method> references = getReferences(instruction.getReference());
         final Class<?> clazz = references.left;
         final Method method = references.right;
 
-        switch (command.getAction()) {
-            case ENABLE:
-                loadInterceptor(clazz, method);
-                break;
-            case DISABLE:
-                restore(clazz);
-                break;
-            default:
-                throw new RunaboutException("Invalid command action: " + command.getAction().name());
-        }
     }
 
     private static void loadInterceptor(final Class<?> clazz, final Method method) {

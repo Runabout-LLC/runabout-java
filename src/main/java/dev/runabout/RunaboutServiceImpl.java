@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
@@ -69,9 +70,19 @@ class RunaboutServiceImpl implements RunaboutService {
 
     @Override
     public RunaboutScenario createScenario(final String eventId, final JsonObject properties, final Object... objects) {
-
-        final String datetime = Instant.now().toString();
         final String method = methodResolver.getSerializedMethod();
+        return createScenario(method, eventId, properties, objects);
+    }
+
+    @Override
+    public RunaboutScenario createScenario(Method method, String eventId, JsonObject properties, Object... objects) {
+        final String serializedMethod = RunaboutUtils.methodToRunaboutString(method);
+        return createScenario(serializedMethod, eventId, properties, objects);
+    }
+
+    private RunaboutScenario createScenario(String method, String eventId, JsonObject properties, Object... objects) {
+        Objects.requireNonNull(method, "Method cannot be null");
+        final String datetime = Instant.now().toString();
 
         final List<RunaboutInstance> instances = new ArrayList<>();
         for (final Object object: objects) {
@@ -87,6 +98,12 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public void saveScenario(String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(eventId, properties, objects);
+        runaboutApi.ingestScenario(scenario);
+    }
+
+    @Override
+    public void saveScenario(Method method, String eventId, JsonObject properties, Object... objects) {
+        final RunaboutScenario scenario = createScenario(method, eventId, properties, objects);
         runaboutApi.ingestScenario(scenario);
     }
 
