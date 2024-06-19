@@ -26,12 +26,10 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
     private final AtomicBoolean installed = new AtomicBoolean(false);
 
-    RunaboutAgentImpl(ContextProvider contextProvider,
-                      RunaboutService runaboutService,
-                      RunaboutListener runaboutListener) {
+    RunaboutAgentImpl(ContextProvider contextProvider, RunaboutService runaboutService) {
         this.contextProvider = contextProvider;
         this.runaboutService = runaboutService;
-        this.runaboutListener = runaboutListener;
+        this.runaboutListener = runaboutService.getListener();
     }
 
     @Override

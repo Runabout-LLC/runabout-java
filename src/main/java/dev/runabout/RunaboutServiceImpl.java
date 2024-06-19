@@ -56,6 +56,11 @@ class RunaboutServiceImpl implements RunaboutService {
     }
 
     @Override
+    public RunaboutListener getListener() {
+        return listener;
+    }
+
+    @Override
     public RunaboutInput serialize(Object object) {
 
         // Short circuit if object is null.
@@ -114,7 +119,7 @@ class RunaboutServiceImpl implements RunaboutService {
     @Override
     public void saveScenario(Method method, String eventId, JsonObject properties, Object... objects) {
         final RunaboutScenario scenario = createScenario(method, eventId, properties, objects);
-        runaboutApi.ingestScenario(scenario);
+        System.out.println(scenario.toJsonObject().toJson()); // TODO temp
     }
 
     private RunaboutInput invokeInstanceSerializer(final Object object) {

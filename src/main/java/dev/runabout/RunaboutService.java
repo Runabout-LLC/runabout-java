@@ -33,6 +33,9 @@ public interface RunaboutService {
     // TODO
     RunaboutApi getRunaboutApi();
 
+    // TODO
+    RunaboutListener getListener();
+
     /**
      * Converts an object to a RunaboutInput.
      *
