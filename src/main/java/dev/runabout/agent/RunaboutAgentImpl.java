@@ -27,7 +27,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
     private final AtomicBoolean installed = new AtomicBoolean(false);
 
     RunaboutAgentImpl(ContextProvider contextProvider, RunaboutService runaboutService) {
-        this.contextProvider = contextProvider;
+        this.contextProvider = contextProvider; // TODO this should probably only exist in the builder
         this.runaboutService = runaboutService;
         this.runaboutListener = runaboutService.getListener();
     }
@@ -38,10 +38,9 @@ class RunaboutAgentImpl implements RunaboutAgent {
             ByteBuddyAgent.install();
 //            register("TODO", serverGroup); // TODO register via RunaboutAPI
         }
-        MethodInterceptor.setRunaboutListener(runaboutListener);
-        MethodInterceptor.setContextProvider(contextProvider);
-        MethodInterceptor.setRunaboutService(runaboutService);
-        MethodInterceptor.enable();
+        final MethodInterceptor interceptor = new RunaboutMethodInterceptor(contextProvider, runaboutService);
+        MethodInterceptorWrapper.setInterceptor(interceptor);
+        MethodInterceptorWrapper.enable();
         installed.set(true);
     }
 
@@ -54,21 +53,21 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
     @Override
     public void refresh(Set<Instruction> instructions) {
-        MethodInterceptor.updateInstructionStore(instructions,
+        MethodInterceptorWrapper.updateInstructionStore(instructions,
                 RunaboutAgentImpl::loadInterceptor,
-                RunaboutAgentImpl::restore);
+                RunaboutAgentImpl::restore,
+                runaboutListener);
     }
 
     @Override
     public void disable() {
-        MethodInterceptor.disable();
-        // TODO stop polling.
+        MethodInterceptorWrapper.disable();
     }
 
 
     private static void loadInterceptor(final Class<?> clazz, @Nullable final Method method) {
         final AsmVisitorWrapper visitor = Advice
-                .to(MethodInterceptor.class)
+                .to(MethodInterceptorWrapper.class)
                 .on(method == null ? ElementMatchers.not(ElementMatchers.isConstructor()) : ElementMatchers.is(method));
         try (final DynamicType.Unloaded<?> unloaded = new ByteBuddy().redefine(clazz).visit(visitor).make()) {
             unloaded.load(clazz.getClassLoader(), ClassReloadingStrategy.fromInstalledAgent(STRATEGY));

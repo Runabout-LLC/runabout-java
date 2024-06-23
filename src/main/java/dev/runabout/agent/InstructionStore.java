@@ -46,7 +46,7 @@ class InstructionStore {
         toRemove.removeAll(prunedInstructions);
         toRemove.stream()
                 .map(InstructionStore::readReferences)
-                .forEach(p -> installInstructions.accept(p.left, p.right));
+                .forEach(p -> removeInstructions.accept(p.left, p.right));
 
         //
         // Invoke install callback for instructions that are new to the set.
