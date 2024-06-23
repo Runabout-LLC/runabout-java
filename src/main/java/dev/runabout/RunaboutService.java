@@ -30,10 +30,10 @@ public interface RunaboutService {
     // TODO
     String getProjectName();
 
-    // TODO
+    @Nullable
     RunaboutApi getRunaboutApi();
 
-    // TODO
+    // TODO ensure nonnull
     RunaboutListener getListener();
 
     /**

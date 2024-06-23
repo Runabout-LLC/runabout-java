@@ -2,15 +2,17 @@ package dev.runabout.agent;
 
 import dev.runabout.JsonObject;
 import dev.runabout.RunaboutService;
+import dev.runabout.annotations.Nullable;
 
 import java.lang.reflect.Method;
 
 public class RunaboutMethodInterceptor implements MethodInterceptor {
 
+    @Nullable
     private final ContextProvider contextProvider;
     private final RunaboutService runaboutService;
 
-    public RunaboutMethodInterceptor(ContextProvider contextProvider, RunaboutService runaboutService) {
+    public RunaboutMethodInterceptor(@Nullable ContextProvider contextProvider, RunaboutService runaboutService) {
         this.contextProvider = contextProvider;
         this.runaboutService = runaboutService;
     }

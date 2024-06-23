@@ -1,6 +1,5 @@
 package dev.runabout.agent;
 
-import dev.runabout.RunaboutListener;
 import dev.runabout.RunaboutService;
 import dev.runabout.annotations.Nullable;
 import net.bytebuddy.ByteBuddy;
@@ -20,28 +19,29 @@ class RunaboutAgentImpl implements RunaboutAgent {
 
     private static final ClassReloadingStrategy.Strategy STRATEGY = ClassReloadingStrategy.Strategy.RETRANSFORMATION;
 
-    private final ContextProvider contextProvider;
     private final RunaboutService runaboutService;
-    private final RunaboutListener runaboutListener;
+    private final MethodInterceptor methodInterceptor;
 
     private final AtomicBoolean installed = new AtomicBoolean(false);
 
-    RunaboutAgentImpl(ContextProvider contextProvider, RunaboutService runaboutService) {
-        this.contextProvider = contextProvider; // TODO this should probably only exist in the builder
+    RunaboutAgentImpl(RunaboutService runaboutService, MethodInterceptor methodInterceptor) {
         this.runaboutService = runaboutService;
-        this.runaboutListener = runaboutService.getListener();
+        this.methodInterceptor = methodInterceptor;
     }
 
     @Override
     public void install() {
         if (!installed.get()) {
             ByteBuddyAgent.install();
-//            register("TODO", serverGroup); // TODO register via RunaboutAPI
+            runaboutService.getRunaboutApi(); // TODO register via RunaboutAPI
+            installed.set(true);
+            MethodInterceptorWrapper.setInterceptor(methodInterceptor);
         }
-        final MethodInterceptor interceptor = new RunaboutMethodInterceptor(contextProvider, runaboutService);
-        MethodInterceptorWrapper.setInterceptor(interceptor);
+    }
+
+    @Override
+    public void enable() {
         MethodInterceptorWrapper.enable();
-        installed.set(true);
     }
 
     @Override
@@ -56,7 +56,7 @@ class RunaboutAgentImpl implements RunaboutAgent {
         MethodInterceptorWrapper.updateInstructionStore(instructions,
                 RunaboutAgentImpl::loadInterceptor,
                 RunaboutAgentImpl::restore,
-                runaboutListener);
+                runaboutService.getListener());
     }
 
     @Override

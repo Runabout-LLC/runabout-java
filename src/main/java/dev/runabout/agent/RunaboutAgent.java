@@ -6,6 +6,8 @@ public interface RunaboutAgent {
 
     void install();
 
+    void enable();
+
     void refresh();
 
     void refresh(Set<Instruction> instructions);
